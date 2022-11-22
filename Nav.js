@@ -6,6 +6,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import LoginScreen from './screens/LoginScreen';
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
@@ -60,6 +61,7 @@ function Nav() {
                         headerShown: false,
                     }}
                 >
+                  <Stack.Screen name = "Login" component = {LoginScreen}/>
                     <Stack.Screen name="Start" component={MainTabNavigator} />
                     {/* Add more screens here if necessary */}
                 </Stack.Navigator>

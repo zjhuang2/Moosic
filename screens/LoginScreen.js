@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, Alert, Image } from 'react-native';
 
 import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getApps, initializeApp } from 'firebase/app';
+import { getFirestore, setDoc, doc } from 'firebase/firestore';
 
 import { Button } from '@rneui/themed';
 import { firebaseConfig } from '../Secrets';
@@ -17,6 +18,7 @@ if (apps.length == 0) {
 }
 
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 function SigninBox({navigation}) {
 
@@ -25,14 +27,19 @@ function SigninBox({navigation}) {
 
   return (
     <View style={styles.loginContainer}>
-        <Image source={require('../picture/moosic.png')} 
-        style = {styles.logo}
-        />
+
+      <Image source={require('../picture/moosic.png')} 
+      style = {styles.logo}
+      />
+
       <Text style={styles.loginHeaderText}>Sign In</Text>
+
       <View style={styles.loginRow}>
+
         <View style={styles.loginLabelContainer}>
           <Text style={styles.loginLabelText}>Email </Text>
         </View>
+
         <View style={styles.loginInputContainer}>
           <TextInput 
             style={styles.loginInputBox}
@@ -43,11 +50,15 @@ function SigninBox({navigation}) {
             value={email}
           />
         </View>
+
       </View>
+
       <View style={styles.loginRow}>
+
         <View style={styles.loginLabelContainer}>
           <Text style={styles.loginLabelText}>Password </Text>
         </View>
+
         <View style={styles.loginInputContainer}>
           <TextInput 
             style={styles.loginInputBox}
@@ -59,13 +70,15 @@ function SigninBox({navigation}) {
             value={password}
           />
         </View>
+
       </View>
+
       <View style={styles.loginRow}>
         <Button
           onPress={async () => {
             try {
               await signInWithEmailAndPassword(auth, email, password);
-              navigation.navigate('Home');
+              //navigation.navigate('Start');
             } catch(error) {
               Alert.alert("Sign Up Error", error.message,[{ text: "OK" }])
             }
@@ -142,7 +155,12 @@ function SignupBox({navigation}) {
           onPress={async () => {
             try {
               const userCred = await createUserWithEmailAndPassword(auth, email, password);
-              await updateProfile(userCred.user, {displayName: displayName});
+              //await updateProfile(userCred.user, {displayName: displayName});
+              await setDoc(
+                doc(db, 'users', userCred.user.uid),
+                {displayName: displayName, userBio: ''}
+                // NEED TO ADD MORE FIELDS HERE!!!
+              );
             } catch(error) {
               Alert.alert("Sign Up Error", error.message,[{ text: "OK" }])
             }
@@ -163,7 +181,7 @@ function LoginScreen({navigation}) {
     onAuthStateChanged(auth, user => {
       if (user) {
         console.log('signed in! user:', user);
-        navigation.navigate('Home');
+        navigation.navigate('Start');
       } else {
         console.log('user is signed out!');
         navigation.navigate('Login');

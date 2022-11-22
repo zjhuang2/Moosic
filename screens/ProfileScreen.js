@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Button } from "react-native";
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Button, Image } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { saveAndDispatch } from "../data/DB.js";
 import { LOAD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS} from "../data/Reducer.js";
@@ -35,7 +35,7 @@ function ProfileScreen(props) {
     const [userName, setUserName] = useState('');
     const [userBio, setUserBio] = useState('');
 
-    const currentTabs = ['Your Songs', 'Liked', 'Your Playlist']
+    const currentTabs = ['Your Songs', 'Liked']
     const [currentTab, setCurrentTab] = useState(currentTabs[0]);
 
     // maybe  use this
@@ -50,21 +50,15 @@ function ProfileScreen(props) {
         //is there a way to run the laood lists in useEffect without it fucking up the first one???
 
     }, [currentTab]);
-    // maybe put currentTab into the [] -> when this changes, call the subscribe function
-    // and then set it equal to the currentTabList - then display this
+
 
     const allUsers = useSelector((state)=> state.usersList);
-    const allLikedSongs = useSelector((state) => state.likedSongsList);
-   // const allPosts = useSelector((state) => state.yourSongPostsList);
-
-    // const runYourSongs = () => {
-    //     const loadAction3 = {type: LOAD_YOUR_SONGS};
-    //     saveAndDispatch(loadAction3, dispatch);
-    // }
+    //const allLikedSongs = useSelector((state) => state.likedSongsList);
 
 
     //This function grabs everything in the songCollections (your posts, likes)
     function subscribeToSnapshot () {
+        //Will need to update userID to be the ID of the current user
         let userID = "me38ADJpJRVR25ILljkQ";
 
         if (snapshotUnsubscribe) {
@@ -72,7 +66,7 @@ function ProfileScreen(props) {
         }
     
         const q = query(
-          collection(db, 'users', userID, 'songCollection'), //THIS S HOW IT NEW TO GRAB THE RIGHT MESSAGES!!!
+          collection(db, 'users', userID, 'songCollection'),
         ); 
 
         snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
@@ -83,36 +77,20 @@ function ProfileScreen(props) {
             song_info.key = docSnap.id;
             songsList.push(song_info);
         });
-        //console.log(songsList);
 
         if (currentTab === 'Your Songs') {
-            console.log('CURRENT TAB!!!');
             let filterYourPosts = songsList.filter(elem => elem.postedBy === 'me');
-            console.log(filterYourPosts);
             setCurrentTabList(filterYourPosts);
         } else if (currentTab === 'Liked') {
-            console.log('INSIDE LIKED');
             let filterLikedSongs = songsList.filter(elem => elem.liked === true);
-            console.log(filterLikedSongs);
             setCurrentTabList(filterLikedSongs);
         }
-        //setCurrentTabList(songsList);
         });
-
     }    
-
-    const runLikedSongs = () => {
-        const loadAction2 = {type: LOAD_LIKED_SONGS};
-        saveAndDispatch(loadAction2, dispatch);
-    }
 
 
     const deleteLikedSong = (songItem) => {
-        console.log("====inside deletedLikedSongs function======");
         let {key} = songItem;
-        console.log("key of deleted song: " + key);
-        console.log("the current 'allLikedSongs: ");
-        console.log([...allLikedSongs]);
 
         const action = {
             type: DELETE_LIKED_SONGS,
@@ -124,15 +102,8 @@ function ProfileScreen(props) {
         saveAndDispatch(action, dispatch);
     }
 
-    const iconName = (songItem) => {
-        if (songItem.liked === true) {
-            return (<Ionicons name = 'heart' size = {30} color = 'red'/>)
-        } else {
-            return (<Ionicons name = 'trash' size = {30} color = 'gray'/>)
-        }
-    }
 
-    // Thiis displays all of the liked songs
+    // Thiis displays ALL songs (not just liked ones)
     function LikedSongListItem({item}) {
         return (
             <View style = {styles.listContainer}>
@@ -148,9 +119,9 @@ function ProfileScreen(props) {
 
                     <View style = {styles.songText}>
 
-                        <Text style = {{fontSize: 20}}>{item.title}</Text>
+                        <Text style = {{fontSize: 20, fontWeight: '700'}}>{item.title}</Text>
 
-                        <Text style = {{paddingTop: 5, paddingBottom: 15}}>{item.artist}</Text>
+                        <Text style = {{paddingTop: 5, paddingBottom: 15, fontWeight: '500'}}>{item.artist}</Text>
 
                         <Text style = {{fontSize: 15}}>I'm feeling {item.mood}</Text>
                     
@@ -172,7 +143,7 @@ function ProfileScreen(props) {
                                 console.log(item);
                                 deleteLikedSong(item);
                             }}>
-                            <Ionicons name = 'heart' size = {30} color = 'red'/>
+                                {item.liked == true?(<Ionicons name = 'heart' size = {25} color = 'red'/>): <Ionicons name = 'trash' size = {25} color = 'gray'/>}
                         </TouchableOpacity>
 
                     </View>
@@ -186,8 +157,10 @@ function ProfileScreen(props) {
     return (
         <View style = {styles.container}>
 
+
             <View style = {styles.profilePic}>
                 <Images/>
+                {/* Will need to update this with each user's own profile pic */}
             </View>
 
             <View style = {styles.userName}>
@@ -210,15 +183,6 @@ function ProfileScreen(props) {
                                 title = {item}
                                 onPress = {() => {
                                     setCurrentTab(item);
-                                    if (item === 'Liked') { //I could just run specific functions for each tab like this one
-                                        //runLikedSongs();
-                                        //setCurrentTabList(allLikedSongs);
-                                        console.log('I JUST CLICKED ONO THE LIKE BUTTNO!!!')
-                                    } 
-                                    // else if(item === 'Your Songs') {
-                                    //     runYourSongs(); //might have to combine this with the original useEffect function (load user)
-                                    //     setCurrentTabList(allPosts);
-                                    // }
                                 }}
                                 color = {item === currentTab ? '#3994c2': 'gray'}
 
@@ -314,6 +278,13 @@ const styles = StyleSheet.create({
     },
     flatListSongs: {
         height: '100%',
+    }, 
+    header: {
+        backgroundColor: "#f5d7e0",
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "space-around",
+        flexDirection: "row",
     }
 
 });

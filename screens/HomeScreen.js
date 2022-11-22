@@ -5,9 +5,26 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  Touchable,
 } from "react-native";
-import { Icon, makeStyles } from "@rneui/base";
+import { Button, Icon, makeStyles } from "@rneui/base";
 import { Divider } from "@rneui/themed";
+import { useEffect, useState } from 'react';
+
+import { getAuth, signOut } from 'firebase/auth';
+import { getApps, initializeApp } from 'firebase/app';
+import { firebaseConfig } from '../Secrets';
+import { onSnapshot, getFirestore, collection } from 'firebase/firestore';
+
+let app;
+const apps = getApps();
+if (apps.length == 0) { 
+  app = initializeApp(firebaseConfig);
+} else {
+  app = apps[0];
+}
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 function HomeScreen(props) {
   const mockData = [
@@ -46,8 +63,30 @@ function HomeScreen(props) {
     },
   ];
 
+  const [displayName, setDisplayName] = useState('');
+  const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
+  const [users, setUsers] = useState([]);
+
+  useEffect(()=>{
+    onSnapshot(collection(db, 'users'), qSnap => {
+      let newUsers = [];
+      qSnap.forEach(docSnap => {
+        let newUser = docSnap.data();
+        newUser.key = docSnap.id;
+        if (newUser.key === currUserId) {
+          setDisplayName(newUser.displayName);
+        }
+        newUsers.push(newUser);
+      });
+      console.log('currUserId:', currUserId)
+      console.log('updated users:', newUsers);
+      setUsers(newUsers);
+    })
+  }, []);
+
   return (
     <View style={styles.container}>
+
       <View style={styles.header}>
         <Text style={styles.headerText}>Moosic Feed</Text>
         <TouchableOpacity>
@@ -55,7 +94,19 @@ function HomeScreen(props) {
             My Profile
           </Text>
         </TouchableOpacity>
+
       </View>
+
+
+      <Button
+        onPress={async () => {
+          await signOut(auth);
+          //navigation.navigate('Login');
+        }}
+      >
+        Now sign out!
+      </Button>
+
       <ScrollView style={styles.feed}>
         <Post
           song={mockData[0].song}
@@ -87,7 +138,11 @@ function HomeScreen(props) {
           replies={mockData[2].replies}
         />
       </ScrollView>
-      <View style={styles.footerMenu}></View>
+      <View style={styles.footerMenu}>
+        <Button
+          title ="Add Post"
+        />
+      </View>
     </View>
   );
 }
@@ -228,6 +283,7 @@ const styles = StyleSheet.create({
   footerMenu: {
     flex: 0.1,
   },
+
 });
 
 export default HomeScreen;
