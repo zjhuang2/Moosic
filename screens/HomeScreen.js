@@ -5,9 +5,29 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  Touchable,
 } from "react-native";
-import { Icon, makeStyles } from "@rneui/base";
-import { Divider } from "@rneui/themed";
+import { Button, Icon, makeStyles } from "@rneui/base";
+import { Divider, Overlay } from "@rneui/themed";
+import { useEffect, useState } from 'react';
+
+import { getAuth, signOut } from 'firebase/auth';
+import { getApps, initializeApp } from 'firebase/app';
+import { firebaseConfig } from '../Secrets';
+import { onSnapshot, getFirestore, collection } from 'firebase/firestore';
+import { ADD_LIKED_SONG } from '../data/Reducer.js';
+import { saveAndDispatch } from "../data/DB.js";
+import { useSelector, useDispatch } from 'react-redux';
+
+let app;
+const apps = getApps();
+if (apps.length == 0) { 
+  app = initializeApp(firebaseConfig);
+} else {
+  app = apps[0];
+}
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 function HomeScreen(props) {
   const mockData = [
@@ -46,8 +66,35 @@ function HomeScreen(props) {
     },
   ];
 
+  const [displayName, setDisplayName] = useState('');
+  const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
+  const [users, setUsers] = useState([]);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+
+
+
+  useEffect(()=>{
+    onSnapshot(collection(db, 'users'), qSnap => {
+      let newUsers = [];
+      qSnap.forEach(docSnap => {
+        let newUser = docSnap.data();
+        newUser.key = docSnap.id;
+        if (newUser.key === currUserId) {
+          setDisplayName(newUser.displayName);
+        }
+        newUsers.push(newUser);
+      });
+      // console.log('currUserId:', currUserId)
+      // console.log('updated users:', newUsers);
+      setUsers(newUsers);
+    })
+  }, []);
+
+
+
   return (
     <View style={styles.container}>
+
       <View style={styles.header}>
         <Text style={styles.headerText}>Moosic Feed</Text>
         <TouchableOpacity>
@@ -55,7 +102,27 @@ function HomeScreen(props) {
             My Profile
           </Text>
         </TouchableOpacity>
+
       </View>
+
+      <Overlay
+        isVisible={overlayVisible}
+        onBackdropPress={()=>setOverlayVisible(false)}
+        overlayStyle = {{height: '50%', width: '90%'}}
+      >
+        <Text>What Song Are You Currently Feeling?</Text>
+      </Overlay>
+
+
+      <Button
+        onPress={async () => {
+          await signOut(auth);
+          //navigation.navigate('Login');
+        }}
+      >
+        Now sign out!
+      </Button>
+
       <ScrollView style={styles.feed}>
         <Post
           song={mockData[0].song}
@@ -87,13 +154,42 @@ function HomeScreen(props) {
           replies={mockData[2].replies}
         />
       </ScrollView>
-      <View style={styles.footerMenu}></View>
+      <View style={styles.footerMenu}>
+        <Button
+          title ="Add Post"
+          onPress={() => {
+            setOverlayVisible(true);
+          }}
+        />
+      </View>
     </View>
   );
 }
 
 function Post(props) {
   const { song, artist, caption, mood, userID, liked, replies } = props;
+
+  const dispatch = useDispatch();
+  
+
+  const addNewLikedSong = (props) => {
+    const { song, artist, caption, mood, userID, liked, replies} = props;
+    const action = {
+      type: ADD_LIKED_SONG,
+      payload: {
+        song: song,
+        artist: artist,
+        caption: caption,
+        mood: mood,
+        userID: userID,
+        liked: true,
+        replies: replies,
+        userDocID: auth.currentUser?.uid,
+      }
+    }
+    saveAndDispatch(action, dispatch);
+  };
+
   return (
     <View
       style={{
@@ -151,7 +247,15 @@ function Post(props) {
           {liked ? (
             <Icon name="favorite" type="material" color="red" />
           ) : (
-            <Icon name="favorite" type="material" color="grey" />
+            <TouchableOpacity
+              onPress = {() => {
+                //add to my song collection
+                addNewLikedSong(props);
+
+              }}
+            >
+              <Icon name="favorite" type="material" color="grey" />
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -228,6 +332,7 @@ const styles = StyleSheet.create({
   footerMenu: {
     flex: 0.1,
   },
+
 });
 
 export default HomeScreen;
