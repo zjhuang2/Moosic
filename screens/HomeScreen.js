@@ -6,94 +6,106 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { Icon, makeStyles } from "@rneui/base";
-import { Divider } from "@rneui/themed";
+import { Icon, makeStyles, FAB, Overlay } from "@rneui/base";
+import { Divider, Input } from "@rneui/themed";
+import { useDispatch, useSelector } from "react-redux";
+import { useState, useEffect } from "react";
+import { LOAD_FEED } from "../data/Reducer";
+import { saveAndDispatch } from "../data/DB";
+import { getApps } from "firebase/app";
+import { firebaseConfig } from "../Secrets";
+import { onSnapshot, getFirestore, query } from "firebase/firestore";
 
 function HomeScreen(props) {
-  const mockData = [
-    {
-      song: "Anti-Hero",
-      artist: "Taylor Swift",
-      caption: "This is my go-to blah music.",
-      mood: "Sad",
-      userID: "bumgeebear",
-      liked: false,
-      replies: [
-        {
-          song: "Message in a Bottle",
-          artist: "Taylor Swift",
-          userID: "loyola250",
-        },
-      ],
-    },
-    {
-      song: "Higher Power",
-      artist: "ColdPlay",
-      caption: "I am feeling Inspired!",
-      mood: "Inspired",
-      userID: "chillwinds",
-      liked: true,
-      replies: [{ song: "Humankind", artist: "Coldplay", userID: "sourpatch" }],
-    },
-    {
-      song: "Hotel California",
-      artist: "Eagles",
-      caption: "Bored moments call for nostalgias.",
-      mood: "Bored",
-      userID: "michigansaddlers",
-      liked: true,
-      replies: [{ song: "My Love", artist: "Westlife", userID: "amandal1999" }],
-    },
-  ];
+  const [visible, setVisible] = useState(false);
+  const toggleOverlay = () => {
+    setVisible(!visible);
+  };
+
+  const { navigation } = props;
+  const feedList = useSelector((state) => state.feedList);
+  const dispatch = useDispatch();
+
+  const [feedListRender, setFeedListRender] = useState(feedList.newFeed);
+
+  // Inputs
+  const [inputSong, setInputSong] = useState("");
+  const [inputArtist, setInputArtist] = useState("");
+  const [inputCaption, setInputCaption] = useState("");
+  const [inputMood, setInputMood] = useState("");
+  const [inputUserId, setInputUserId] = useState("");
+
+  useEffect(() => {
+    const loadAction = { type: LOAD_FEED };
+    saveAndDispatch(loadAction, dispatch);
+    setFeedListRender(feedList.newFeed);
+    console.log("========");
+    console.log(feedListRender);
+  }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Moosic Feed</Text>
-        <TouchableOpacity>
+        <Text style={styles.headerTextApp}>Moosic Feed</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Text style={{ color: "#e84878", fontSize: 18, top: 20 }}>
             My Profile
           </Text>
         </TouchableOpacity>
       </View>
+
       <ScrollView style={styles.feed}>
-        <Post
-          song={mockData[0].song}
-          artist={mockData[0].artist}
-          caption={mockData[0].caption}
-          mood={mockData[0].mood}
-          userID={mockData[0].userID}
-          liked={mockData[0].liked}
-          replies={mockData[0].replies}
-        />
-
-        <Post
-          song={mockData[1].song}
-          artist={mockData[1].artist}
-          caption={mockData[1].caption}
-          mood={mockData[1].mood}
-          userID={mockData[1].userID}
-          liked={mockData[1].liked}
-          replies={mockData[1].replies}
-        />
-
-        <Post
-          song={mockData[2].song}
-          artist={mockData[2].artist}
-          caption={mockData[2].caption}
-          mood={mockData[2].mood}
-          userID={mockData[2].userID}
-          liked={mockData[2].liked}
-          replies={mockData[2].replies}
+        <FlatList
+          data={feedListRender}
+          renderItem={(post) => {
+            return (
+              <Post
+                song={post.song}
+                artist={post.artist}
+                caption={post.caption}
+                mood={post.mood}
+                userId={post.userId}
+                liked={post.liked}
+                replies={post.replies}
+              />
+            );
+          }}
         />
       </ScrollView>
-      <View style={styles.footerMenu}></View>
+
+      <FAB
+        title="Post"
+        upperCase
+        icon={{ name: "add", color: "white" }}
+        color="#d14f8e"
+        style={{ bottom: "10%", flex: 0.0001 }}
+        size="large"
+        onPress={toggleOverlay}
+      />
+
+      <Overlay
+        isVisible={visible}
+        onBackdropPress={toggleOverlay}
+        overlayStyle={styles.addPostOverlay}
+      >
+        <View>
+          <View>
+            <Text style={styles.headerText}>Post new Moosic</Text>
+          </View>
+          <View>
+            <Input placeholder="Song" />
+            <Input placeholder="Artist" />
+            <Input placeholder="Your comments!" />
+            <Input placeholder="How are you feeling?" />
+          </View>
+        </View>
+      </Overlay>
     </View>
   );
 }
 
 function Post(props) {
-  const { song, artist, caption, mood, userID, liked, replies } = props;
+  const { song, artist, caption, mood, userId, liked, replies } = props;
   return (
     <View
       style={{
@@ -113,7 +125,7 @@ function Post(props) {
           left: 12,
         }}
       >
-        {userID} is feeling: {mood}
+        {userId} is feeling: {mood}
       </Text>
       <View style={styles.moosicWidget}>
         <View
@@ -165,7 +177,7 @@ function Post(props) {
       >
         <TouchableOpacity>
           <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
-            {replies[0].userID}
+            {song}
           </Text>
         </TouchableOpacity>
         <View style={styles.replyWidget}>
@@ -174,9 +186,9 @@ function Post(props) {
           </View>
           <View style={{ flex: 0.5, justifyContent: "center" }}>
             <Text style={{ fontWeight: "600", fontSize: 18 }}>
-              {replies[0].song}
+              {/* {replies[0].song} */}
             </Text>
-            <Text>{replies[0].artist}</Text>
+            {/* <Text>{replies[0].artist}</Text> */}
           </View>
         </View>
       </View>
@@ -199,11 +211,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     flexDirection: "row",
   },
-  headerText: {
+  headerTextApp: {
     fontSize: 24,
     color: "#e84878",
     fontWeight: "bold",
     top: 20,
+  },
+  headerText: {
+    fontSize: 24,
+    color: "#e84878",
+    fontWeight: "bold",
+    margin: 10,
   },
   feed: {
     flex: 0.65,
@@ -225,8 +243,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     height: 70,
   },
-  footerMenu: {
-    flex: 0.1,
+  addPostOverlay: {
+    flexDirection: "column",
+    width: "90%",
+    backgroundColor: "white",
   },
 });
 
