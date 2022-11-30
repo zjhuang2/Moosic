@@ -1,9 +1,14 @@
+import { updateCurrentUser } from "firebase/auth";
 import { loadBundle, startAfter } from "firebase/firestore";
 
 const LOAD_USER = 'LOAD_USER';
 const ADD_USER = 'ADD_USER';
+const UPDATE_USER = 'UPDATE_USER';
+
 const LOAD_LIKED_SONGS = 'LOAD_LIKED_SONGS';
 const DELETE_LIKED_SONGS = 'DELETE_LIKED_SONGS';
+
+const ADD_LIKED_SONG = 'ADD_LIKED_SONG';
 
 const LOAD_YOUR_SONGS = 'LOAD_YOUR_SONGS';
 
@@ -50,6 +55,10 @@ const addUser = () => {
 
 }
 
+const updateUser = () => {
+    console.log("not doing anything");
+}
+
 const loadLikedSongs = (state, payload) => {
     
     let {filteredLikedSongs} = payload;
@@ -62,13 +71,9 @@ const loadLikedSongs = (state, payload) => {
 
 const deleteLikedSongs = (state, payload) => {
     let {currentLikedSongs, key} = payload;
-
-    console.log("=====these are my liked songs in reducer.js======");
-    console.log(currentLikedSongs);
+    let {likedSongsList} = state;
 
     let filteredLikedSongs = currentLikedSongs.filter(elem => elem.key !== key);
-    console.log("This is once I filtered out the songs (filteredLikedSongs): ")
-    console.log(filteredLikedSongs);
  
     return {
         ...state,
@@ -86,6 +91,34 @@ const loadYourSongs = (state, payload) => {
     }
 }
 
+const addLikedSong = (state, payload) => {
+    const { song, artist, caption, mood, userID, liked, replies, userDocID, key} = payload;
+
+    const {likedSongsList} = state;
+
+    let updatedSongList = likedSongsList.concat({
+        song: song,
+        artist: artist,
+        caption: caption,
+        mood: mood,
+        userID: userID,
+        liked: liked,
+        replies: replies,
+        userDocID: userDocID,
+        key: key,
+    })
+
+    //console.log(updatedSongList);
+    console.log("UPDATED SONGS LIST: ", updatedSongList);
+    console.log("Current SONGS LIST: ", likedSongsList);
+
+    return {
+        ...state,
+        likedSongsList: updatedSongList
+    }
+
+}
+
 function rootReducer(state=initialState, action) {
     const { type, payload } = action;
     switch (type) {
@@ -94,12 +127,16 @@ function rootReducer(state=initialState, action) {
             return loadUser(state, payload);
         case ADD_USER:
             return addUser(state, payload);
+        case UPDATE_USER:
+            return updateUser(state, payload);
         case LOAD_LIKED_SONGS:
             return loadLikedSongs(state, payload);
         case DELETE_LIKED_SONGS:
             return deleteLikedSongs(state, payload);
         case LOAD_YOUR_SONGS:
             return loadYourSongs(state,payload);
+        case ADD_LIKED_SONG:
+            return addLikedSong(state, payload);
         default:
             return state;
     }
@@ -112,4 +149,6 @@ export {
     LOAD_LIKED_SONGS,
     DELETE_LIKED_SONGS,
     LOAD_YOUR_SONGS,
+    ADD_LIKED_SONG,
+    UPDATE_USER,
  };

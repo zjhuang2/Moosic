@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Button } from "react-native";
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Button, Image } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { saveAndDispatch } from "../data/DB.js";
-import { LOAD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS} from "../data/Reducer.js";
+import { LOAD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS, UPDATE_USER} from "../data/Reducer.js";
 import Images from '../Images.js';
+//import { FAB } from 'react-native-el
+import { Overlay, Input } from "@rneui/themed";
 
 //Firebase stuff
 import { 
@@ -15,65 +17,95 @@ import {
 
 import { useSelector, useDispatch } from 'react-redux';
 
+import { getAuth, signOut } from 'firebase/auth';
+
 
 let app;
 if (getApps().length == 0){
   app = initializeApp(firebaseConfig);
 } 
+
+const auth = getAuth(app);
 const db = getFirestore(app);
+
 
 let snapshotUnsubscribe = undefined;
 
 
 function ProfileScreen(props) {
 
-
     const {navigation, route} = props;
     const dispatch = useDispatch();
 
-    //state variables
-    const [userName, setUserName] = useState('');
-    const [userBio, setUserBio] = useState('');
-
-    const currentTabs = ['Your Songs', 'Liked', 'Your Playlist']
+    //state variables  
+    const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
+    const currentTabs = ['Your Songs', 'Liked']
     const [currentTab, setCurrentTab] = useState(currentTabs[0]);
-
-    // maybe  use this
     const [currentTabList, setCurrentTabList] = useState([]);
-
-
-    //This runs everytime I have a rerender (set state of any of my above variables)
-    useEffect(()=> {
-        const loadAction = {type: LOAD_USER};
-        saveAndDispatch(loadAction, dispatch);
-        subscribeToSnapshot();
-        //is there a way to run the laood lists in useEffect without it fucking up the first one???
-
-    }, [currentTab]);
-    // maybe put currentTab into the [] -> when this changes, call the subscribe function
-    // and then set it equal to the currentTabList - then display this
+    const [overlayVisible, setOverlayVisible] = useState(false);
 
     const allUsers = useSelector((state)=> state.usersList);
     const allLikedSongs = useSelector((state) => state.likedSongsList);
-   // const allPosts = useSelector((state) => state.yourSongPostsList);
 
-    // const runYourSongs = () => {
-    //     const loadAction3 = {type: LOAD_YOUR_SONGS};
-    //     saveAndDispatch(loadAction3, dispatch);
-    // }
+    //  I NEEED A WAY TO GRAB THESE FROM THE HOME SCREEN!!!
+    const [userName, setUserName] = useState('');
+    const [userBio, setUserBio] = useState('');
+
+    //This runs everytime I have a rerender (set state of any of my above variables)
+    useEffect(()=> {
+        // I need to keep this one (loadAction)
+        const loadAction = {type: LOAD_USER};
+        saveAndDispatch(loadAction, dispatch);
+        subscribeToSnapshot();
+
+        
+        //console.log("I'm on user: ", currUserId);
+        //is there a way to run the laood lists in useEffect without it fucking up the first one???
+
+    }, [currentTab]);
+
+
+
+    //there's probably an easier way to do this
+    //maybe ask
+    const grabName = () => {
+        for (let i = 0; i< allUsers.length; i++) {
+            let currentUser = allUsers[i];
+            if (currentUser.key === currUserId) {
+                //setUserName(currentUser.displayName);
+                console.log(currentUser.displayName);
+                return (currentUser.displayName)
+            }
+        }
+    }
+
+    const grabUserBio = () => {
+        for (let i = 0; i< allUsers.length; i++) {
+            let currentUser = allUsers[i];
+            if (currentUser.key === currUserId) {
+                //setUserBio(currentUser.userBio)
+                return (currentUser.userBio)
+            }
+        }
+    }
+
 
 
     //This function grabs everything in the songCollections (your posts, likes)
     function subscribeToSnapshot () {
-        let userID = "me38ADJpJRVR25ILljkQ";
+        //Will need to update userID to be the ID of the current user
+        //REPLACE WITH CURRUSERID (state variable)
+        //let userID = "me38ADJpJRVR25ILljkQ";
 
         if (snapshotUnsubscribe) {
           snapshotUnsubscribe();
         }
     
         const q = query(
-          collection(db, 'users', userID, 'songCollection'), //THIS S HOW IT NEW TO GRAB THE RIGHT MESSAGES!!!
+        //   collection(db, 'users', userID, 'songCollection'),
+        collection(db, 'users', currUserId, 'songCollection'),
         ); 
+
 
         snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
         let songsList = [];
@@ -82,37 +114,36 @@ function ProfileScreen(props) {
             let song_info = docSnap.data();
             song_info.key = docSnap.id;
             songsList.push(song_info);
+            
         });
-        //console.log(songsList);
 
         if (currentTab === 'Your Songs') {
-            console.log('CURRENT TAB!!!');
             let filterYourPosts = songsList.filter(elem => elem.postedBy === 'me');
-            console.log(filterYourPosts);
             setCurrentTabList(filterYourPosts);
         } else if (currentTab === 'Liked') {
-            console.log('INSIDE LIKED');
             let filterLikedSongs = songsList.filter(elem => elem.liked === true);
-            console.log(filterLikedSongs);
             setCurrentTabList(filterLikedSongs);
         }
-        //setCurrentTabList(songsList);
         });
-
     }    
 
-    const runLikedSongs = () => {
-        const loadAction2 = {type: LOAD_LIKED_SONGS};
-        saveAndDispatch(loadAction2, dispatch);
+    const updateUser = () => {
+        //currUserId
+        //will need their userBio 
+
+        const action = {
+            type: UPDATE_USER,
+            payload: {
+                key: currUserId,
+                userBio: userBio,
+            }
+        }
+        saveAndDispatch(action, dispatch);
     }
 
 
     const deleteLikedSong = (songItem) => {
-        console.log("====inside deletedLikedSongs function======");
         let {key} = songItem;
-        console.log("key of deleted song: " + key);
-        console.log("the current 'allLikedSongs: ");
-        console.log([...allLikedSongs]);
 
         const action = {
             type: DELETE_LIKED_SONGS,
@@ -124,16 +155,10 @@ function ProfileScreen(props) {
         saveAndDispatch(action, dispatch);
     }
 
-    const iconName = (songItem) => {
-        if (songItem.liked === true) {
-            return (<Ionicons name = 'heart' size = {30} color = 'red'/>)
-        } else {
-            return (<Ionicons name = 'trash' size = {30} color = 'gray'/>)
-        }
-    }
 
-    // Thiis displays all of the liked songs
+    // Thiis displays ALL songs (not just liked ones)
     function LikedSongListItem({item}) {
+        //console.log("THIS IS EACH ITEMGOIING INTO THE LIIST COMPONENT: ", item);
         return (
             <View style = {styles.listContainer}>
                 <View style = {styles.individualSongContainer}>
@@ -141,38 +166,29 @@ function ProfileScreen(props) {
                     <View>
                         <View style = {{flexDirection: 'row', marginVertical: 2}}>
                             <Ionicons name = 'person' size = {15} color = 'gray'/>
-                            <Text>  {item.postedBy}</Text>
+                            <Text>  {item.userID}</Text>
                         </View>
                         <Ionicons name = 'image' size = {80} color = 'gray'/>
                     </View>
 
                     <View style = {styles.songText}>
 
-                        <Text style = {{fontSize: 20}}>{item.title}</Text>
+                        <Text style = {{fontSize: 20, fontWeight: '700'}}>{item.song}</Text>
 
-                        <Text style = {{paddingTop: 5, paddingBottom: 15}}>{item.artist}</Text>
+                        <Text style = {{paddingTop: 5, paddingBottom: 15, fontWeight: '500'}}>{item.artist}</Text>
 
                         <Text style = {{fontSize: 15}}>I'm feeling {item.mood}</Text>
                     
                     </View>
 
                     <View style = {styles.likeButton}>
-                        {/* <TouchableOpacity
-                            onPress={() => {
-                                if (item.liked === true) {
-                                    deleteLikedSongs(item);
-                                }
-                            }}
-                        >
-                            {iconName(item)}
-                        </TouchableOpacity> */}
 
                         <TouchableOpacity
                             onPress={() => {
-                                console.log(item);
+                                // console.log(item);
                                 deleteLikedSong(item);
                             }}>
-                            <Ionicons name = 'heart' size = {30} color = 'red'/>
+                                {item.liked == true?(<Ionicons name = 'heart' size = {25} color = 'red'/>): <Ionicons name = 'trash' size = {25} color = 'gray'/>}
                         </TouchableOpacity>
 
                     </View>
@@ -185,18 +201,58 @@ function ProfileScreen(props) {
 
     return (
         <View style = {styles.container}>
+            
+            <View style = {{alignItems: 'flex-end', paddingRight: 30}}>
+                <Button
+                    title = "Edit"
+                    onPress={() => {
+                        setOverlayVisible(true);
+                        // do we want to go to a new page? or just an overlay?
+                    }}
+                />
+            </View>
+
+            <Overlay
+                isVisible={overlayVisible}
+                onBackdropPress={()=>setOverlayVisible(false)}
+                overlayStyle = {{height: '50%', width: '90%'}}
+            >
+                <Text>Profile Information</Text>
+                <Input
+                    placeholder = {'Bio'}
+                    value = {userBio === '' ? grabUserBio() : userBio}
+                    onChangeText = {(newText) => 
+                        setUserBio(newText)
+                    }
+                />
+
+                <Button
+                    title = "Save Changes"
+                    //will need user's ID (key) and their bio
+                    onPress = {() => {
+                        updateUser();
+                        setOverlayVisible(false);
+                    }}
+                />
+            </Overlay>
+
 
             <View style = {styles.profilePic}>
                 <Images/>
+                {/* Will need to update this with each user's own profile pic */}
             </View>
 
+
             <View style = {styles.userName}>
-                <Text style = {{fontSize: 20}}>{allUsers[0].name}</Text>
+                <Text style = {{fontSize: 20}}>{grabName()}</Text>
+                {/* <Text style = {{fontSize: 20}}>{userName}</Text> */}
             </View>
 
 
             <View style = {styles.bioText}>
-                <Text>{allUsers[0].bio}</Text>
+                <Text>{userBio === ''? grabUserBio() : userBio}</Text>
+                {/* <Text>{grabUserBio()}</Text> */}
+                {/* <Text>{userBio}</Text> */}
             </View>
 
             <View style = {styles.listItemsContainer}>
@@ -210,15 +266,6 @@ function ProfileScreen(props) {
                                 title = {item}
                                 onPress = {() => {
                                     setCurrentTab(item);
-                                    if (item === 'Liked') { //I could just run specific functions for each tab like this one
-                                        //runLikedSongs();
-                                        //setCurrentTabList(allLikedSongs);
-                                        console.log('I JUST CLICKED ONO THE LIKE BUTTNO!!!')
-                                    } 
-                                    // else if(item === 'Your Songs') {
-                                    //     runYourSongs(); //might have to combine this with the original useEffect function (load user)
-                                    //     setCurrentTabList(allPosts);
-                                    // }
                                 }}
                                 color = {item === currentTab ? '#3994c2': 'gray'}
 
@@ -314,6 +361,13 @@ const styles = StyleSheet.create({
     },
     flatListSongs: {
         height: '100%',
+    }, 
+    header: {
+        backgroundColor: "#f5d7e0",
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "space-around",
+        flexDirection: "row",
     }
 
 });
