@@ -4,7 +4,7 @@ import { getFirestore, collection, getDocs,
          from 'firebase/firestore';
 import { getAuth, signOut } from 'firebase/auth';
 import { firebaseConfig } from '../Secrets';
-import { LOAD_USER, ADD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS, ADD_LIKED_SONG } from './Reducer';
+import { LOAD_USER, ADD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS, ADD_LIKED_SONG , UPDATE_USER} from './Reducer';
 
 let app, db = undefined;
 const USERSCOLLECTION = 'users';
@@ -30,6 +30,10 @@ const saveAndDispatch = async(action, dispatch) => {
         case ADD_USER: // haven't written this yet
             addUserAndDisptch(action, dispatch);
             return;
+        
+        case UPDATE_USER:
+            updateUserAndDispatch(action, dispatch);
+            return;
 
         case LOAD_LIKED_SONGS:
             loadLikedSongsAndDispatch(action, dispatch);
@@ -53,7 +57,7 @@ const saveAndDispatch = async(action, dispatch) => {
 export {saveAndDispatch};
 
 
-//goiong to try to make this loaod the user AND load your poosts
+//Need this
 const loadUserAndDispatch = async (action, dispatch) => {
     //userID willl have too change later after authentication
 
@@ -84,6 +88,21 @@ const loadUserAndDispatch = async (action, dispatch) => {
 
         dispatch(newAction);
     });
+}
+
+const updateUserAndDispatch = async (action, dispatch) => {
+    console.log(action);
+    const {payload} = action;
+    const {userBio, key} = payload;
+
+    const docToUpdate = doc(collection(db, 'users'), key);
+
+    await updateDoc(docToUpdate, {
+        userBio: userBio
+    });
+
+    //dispatch(action);
+
 }
 
 //II THINK THIS IS USELESS

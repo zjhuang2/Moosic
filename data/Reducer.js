@@ -1,7 +1,10 @@
+import { updateCurrentUser } from "firebase/auth";
 import { loadBundle, startAfter } from "firebase/firestore";
 
 const LOAD_USER = 'LOAD_USER';
 const ADD_USER = 'ADD_USER';
+const UPDATE_USER = 'UPDATE_USER';
+
 const LOAD_LIKED_SONGS = 'LOAD_LIKED_SONGS';
 const DELETE_LIKED_SONGS = 'DELETE_LIKED_SONGS';
 
@@ -50,6 +53,10 @@ const loadUser = (state, payload) => {
 
 const addUser = () => {
 
+}
+
+const updateUser = () => {
+    console.log("not doing anything");
 }
 
 const loadLikedSongs = (state, payload) => {
@@ -120,6 +127,8 @@ function rootReducer(state=initialState, action) {
             return loadUser(state, payload);
         case ADD_USER:
             return addUser(state, payload);
+        case UPDATE_USER:
+            return updateUser(state, payload);
         case LOAD_LIKED_SONGS:
             return loadLikedSongs(state, payload);
         case DELETE_LIKED_SONGS:
@@ -141,4 +150,5 @@ export {
     DELETE_LIKED_SONGS,
     LOAD_YOUR_SONGS,
     ADD_LIKED_SONG,
+    UPDATE_USER,
  };

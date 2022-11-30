@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, Button, Image } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { saveAndDispatch } from "../data/DB.js";
-import { LOAD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS} from "../data/Reducer.js";
+import { LOAD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS, UPDATE_USER} from "../data/Reducer.js";
 import Images from '../Images.js';
+//import { FAB } from 'react-native-el
+import { Overlay, Input } from "@rneui/themed";
 
 //Firebase stuff
 import { 
@@ -35,32 +37,58 @@ function ProfileScreen(props) {
     const {navigation, route} = props;
     const dispatch = useDispatch();
 
-    //state variables
-    const [userName, setUserName] = useState('');
-    const [userBio, setUserBio] = useState('');
-   
+    //state variables  
     const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
-
     const currentTabs = ['Your Songs', 'Liked']
     const [currentTab, setCurrentTab] = useState(currentTabs[0]);
-
-    // maybe  use this
     const [currentTabList, setCurrentTabList] = useState([]);
+    const [overlayVisible, setOverlayVisible] = useState(false);
 
+    const allUsers = useSelector((state)=> state.usersList);
+    const allLikedSongs = useSelector((state) => state.likedSongsList);
+
+    //  I NEEED A WAY TO GRAB THESE FROM THE HOME SCREEN!!!
+    const [userName, setUserName] = useState('');
+    const [userBio, setUserBio] = useState('');
 
     //This runs everytime I have a rerender (set state of any of my above variables)
     useEffect(()=> {
+        // I need to keep this one (loadAction)
         const loadAction = {type: LOAD_USER};
         saveAndDispatch(loadAction, dispatch);
         subscribeToSnapshot();
-        console.log("I'm on user: ", currUserId);
+
+        
+        //console.log("I'm on user: ", currUserId);
         //is there a way to run the laood lists in useEffect without it fucking up the first one???
 
     }, [currentTab]);
 
 
-    const allUsers = useSelector((state)=> state.usersList);
-    const allLikedSongs = useSelector((state) => state.likedSongsList);
+
+    //there's probably an easier way to do this
+    //maybe ask
+    const grabName = () => {
+        for (let i = 0; i< allUsers.length; i++) {
+            let currentUser = allUsers[i];
+            if (currentUser.key === currUserId) {
+                //setUserName(currentUser.displayName);
+                console.log(currentUser.displayName);
+                return (currentUser.displayName)
+            }
+        }
+    }
+
+    const grabUserBio = () => {
+        for (let i = 0; i< allUsers.length; i++) {
+            let currentUser = allUsers[i];
+            if (currentUser.key === currUserId) {
+                //setUserBio(currentUser.userBio)
+                return (currentUser.userBio)
+            }
+        }
+    }
+
 
 
     //This function grabs everything in the songCollections (your posts, likes)
@@ -89,8 +117,6 @@ function ProfileScreen(props) {
             
         });
 
-        //console.log("====MY UPDATED SONGS LIST: ", songsList);
-
         if (currentTab === 'Your Songs') {
             let filterYourPosts = songsList.filter(elem => elem.postedBy === 'me');
             setCurrentTabList(filterYourPosts);
@@ -101,11 +127,23 @@ function ProfileScreen(props) {
         });
     }    
 
+    const updateUser = () => {
+        //currUserId
+        //will need their userBio 
+
+        const action = {
+            type: UPDATE_USER,
+            payload: {
+                key: currUserId,
+                userBio: userBio,
+            }
+        }
+        saveAndDispatch(action, dispatch);
+    }
+
 
     const deleteLikedSong = (songItem) => {
         let {key} = songItem;
-        //console.log(key);
-        console.log("LIKED SONG LIST IN DELETE FUNCTION: ", allLikedSongs);
 
         const action = {
             type: DELETE_LIKED_SONGS,
@@ -120,7 +158,7 @@ function ProfileScreen(props) {
 
     // Thiis displays ALL songs (not just liked ones)
     function LikedSongListItem({item}) {
-        console.log("THIS IS EACH ITEMGOIING INTO THE LIIST COMPONENT: ", item);
+        //console.log("THIS IS EACH ITEMGOIING INTO THE LIIST COMPONENT: ", item);
         return (
             <View style = {styles.listContainer}>
                 <View style = {styles.individualSongContainer}>
@@ -163,6 +201,40 @@ function ProfileScreen(props) {
 
     return (
         <View style = {styles.container}>
+            
+            <View style = {{alignItems: 'flex-end', paddingRight: 30}}>
+                <Button
+                    title = "Edit"
+                    onPress={() => {
+                        setOverlayVisible(true);
+                        // do we want to go to a new page? or just an overlay?
+                    }}
+                />
+            </View>
+
+            <Overlay
+                isVisible={overlayVisible}
+                onBackdropPress={()=>setOverlayVisible(false)}
+                overlayStyle = {{height: '50%', width: '90%'}}
+            >
+                <Text>Profile Information</Text>
+                <Input
+                    placeholder = {'Bio'}
+                    value = {userBio === '' ? grabUserBio() : userBio}
+                    onChangeText = {(newText) => 
+                        setUserBio(newText)
+                    }
+                />
+
+                <Button
+                    title = "Save Changes"
+                    //will need user's ID (key) and their bio
+                    onPress = {() => {
+                        updateUser();
+                        setOverlayVisible(false);
+                    }}
+                />
+            </Overlay>
 
 
             <View style = {styles.profilePic}>
@@ -170,13 +242,17 @@ function ProfileScreen(props) {
                 {/* Will need to update this with each user's own profile pic */}
             </View>
 
+
             <View style = {styles.userName}>
-                <Text style = {{fontSize: 20}}>{allUsers[0].name}</Text>
+                <Text style = {{fontSize: 20}}>{grabName()}</Text>
+                {/* <Text style = {{fontSize: 20}}>{userName}</Text> */}
             </View>
 
 
             <View style = {styles.bioText}>
-                <Text>{allUsers[0].bio}</Text>
+                <Text>{userBio === ''? grabUserBio() : userBio}</Text>
+                {/* <Text>{grabUserBio()}</Text> */}
+                {/* <Text>{userBio}</Text> */}
             </View>
 
             <View style = {styles.listItemsContainer}>
