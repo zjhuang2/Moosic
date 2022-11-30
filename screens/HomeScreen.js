@@ -8,20 +8,21 @@ import {
   Touchable,
 } from "react-native";
 import { Button, Icon, makeStyles } from "@rneui/base";
-import { Divider, Overlay } from "@rneui/themed";
-import { useEffect, useState } from 'react';
+import { Divider, Overlay, Input } from "@rneui/themed";
+import { useEffect, useState } from "react";
 
-import { getAuth, signOut } from 'firebase/auth';
-import { getApps, initializeApp } from 'firebase/app';
-import { firebaseConfig } from '../Secrets';
-import { onSnapshot, getFirestore, collection } from 'firebase/firestore';
-import { ADD_LIKED_SONG } from '../data/Reducer.js';
+import { getAuth, signOut } from "firebase/auth";
+import { getApps, initializeApp } from "firebase/app";
+import { firebaseConfig } from "../Secrets";
+import { onSnapshot, getFirestore, collection } from "firebase/firestore";
+import { ADD_LIKED_SONG } from "../data/Reducer.js";
 import { saveAndDispatch } from "../data/DB.js";
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from "react-redux";
+import { FAB } from "@rneui/base";
 
 let app;
 const apps = getApps();
-if (apps.length == 0) { 
+if (apps.length == 0) {
   app = initializeApp(firebaseConfig);
 } else {
   app = apps[0];
@@ -66,17 +67,18 @@ function HomeScreen(props) {
     },
   ];
 
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState("");
   const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
   const [users, setUsers] = useState([]);
   const [overlayVisible, setOverlayVisible] = useState(false);
+  const toggleOverlay = () => {
+    setOverlayVisible(!overlayVisible);
+  };
 
-
-
-  useEffect(()=>{
-    onSnapshot(collection(db, 'users'), qSnap => {
+  useEffect(() => {
+    onSnapshot(collection(db, "users"), (qSnap) => {
       let newUsers = [];
-      qSnap.forEach(docSnap => {
+      qSnap.forEach((docSnap) => {
         let newUser = docSnap.data();
         newUser.key = docSnap.id;
         if (newUser.key === currUserId) {
@@ -87,41 +89,25 @@ function HomeScreen(props) {
       // console.log('currUserId:', currUserId)
       // console.log('updated users:', newUsers);
       setUsers(newUsers);
-    })
+    });
   }, []);
 
-
+  const { navigation } = props;
 
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
         <Text style={styles.headerText}>Moosic Feed</Text>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={async () => {
+            await signOut(auth);
+          }}
+        >
           <Text style={{ color: "#e84878", fontSize: 18, top: 20 }}>
-            My Profile
+            Sign out
           </Text>
         </TouchableOpacity>
-
       </View>
-
-      <Overlay
-        isVisible={overlayVisible}
-        onBackdropPress={()=>setOverlayVisible(false)}
-        overlayStyle = {{height: '50%', width: '90%'}}
-      >
-        <Text>What Song Are You Currently Feeling?</Text>
-      </Overlay>
-
-
-      <Button
-        onPress={async () => {
-          await signOut(auth);
-          //navigation.navigate('Login');
-        }}
-      >
-        Now sign out!
-      </Button>
 
       <ScrollView style={styles.feed}>
         <Post
@@ -154,14 +140,34 @@ function HomeScreen(props) {
           replies={mockData[2].replies}
         />
       </ScrollView>
-      <View style={styles.footerMenu}>
-        <Button
-          title ="Add Post"
-          onPress={() => {
-            setOverlayVisible(true);
-          }}
-        />
-      </View>
+
+      <FAB
+        title="Post"
+        upperCase
+        icon={{ name: "add", color: "white" }}
+        color="#d14f8e"
+        style={{ bottom: "10%", flex: 0.0001 }}
+        size="large"
+        onPress={toggleOverlay}
+      />
+
+      <Overlay
+        isVisible={overlayVisible}
+        onBackdropPress={toggleOverlay}
+        overlayStyle={styles.addPostOverlay}
+      >
+        <View>
+          <View>
+            <Text style={styles.headerTextOverlay}>Post new Moosic</Text>
+          </View>
+          <View>
+            <Input placeholder="Song" />
+            <Input placeholder="Artist" />
+            <Input placeholder="Your comments!" />
+            <Input placeholder="How are you feeling?" />
+          </View>
+        </View>
+      </Overlay>
     </View>
   );
 }
@@ -170,10 +176,9 @@ function Post(props) {
   const { song, artist, caption, mood, userID, liked, replies } = props;
 
   const dispatch = useDispatch();
-  
 
   const addNewLikedSong = (props) => {
-    const { song, artist, caption, mood, userID, liked, replies} = props;
+    const { song, artist, caption, mood, userID, liked, replies } = props;
     const action = {
       type: ADD_LIKED_SONG,
       payload: {
@@ -185,8 +190,8 @@ function Post(props) {
         liked: true,
         replies: replies,
         userDocID: auth.currentUser?.uid,
-      }
-    }
+      },
+    };
     saveAndDispatch(action, dispatch);
   };
 
@@ -248,10 +253,9 @@ function Post(props) {
             <Icon name="favorite" type="material" color="red" />
           ) : (
             <TouchableOpacity
-              onPress = {() => {
+              onPress={() => {
                 //add to my song collection
                 addNewLikedSong(props);
-
               }}
             >
               <Icon name="favorite" type="material" color="grey" />
@@ -309,6 +313,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     top: 20,
   },
+  headerTextOverlay: {
+    fontSize: 24,
+    color: "#e84878",
+    fontWeight: "bold",
+    margin: 10,
+  },
   feed: {
     flex: 0.65,
     width: "100%",
@@ -332,7 +342,11 @@ const styles = StyleSheet.create({
   footerMenu: {
     flex: 0.1,
   },
-
+  addPostOverlay: {
+    flexDirection: "column",
+    width: "90%",
+    backgroundColor: "white",
+  },
 });
 
 export default HomeScreen;
