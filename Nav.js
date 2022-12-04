@@ -7,6 +7,7 @@ import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
+import MoodScreen from './screens/MoodScreen';
 
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
@@ -63,6 +64,7 @@ function Nav() {
                 >
                   <Stack.Screen name = "Login" component = {LoginScreen}/>
                     <Stack.Screen name="Start" component={MainTabNavigator} />
+                    <Stack.Screen name = "Mood" component = {MoodScreen} />
                     {/* Add more screens here if necessary */}
                 </Stack.Navigator>
             </NavigationContainer>
