@@ -76,6 +76,8 @@ function HomeScreen(props) {
     });
   }, []);
 
+  console.log(feed);
+
   const { navigation } = props;
   const dispatch = useDispatch();
 
@@ -122,18 +124,20 @@ function HomeScreen(props) {
 
       <View style={styles.feed}>
         <FlatList
-          data={feedList}
+          data={feed}
           renderItem={(post) => {
+            console.log("======");
+            console.log(post);
             return (
               <Post
-                song={post.song}
-                artist={post.artist}
-                caption={post.artist}
-                liked={post.liked}
-                mood={post.mood}
-                userId={post.userId}
-                replies={post.replies}
-                postTime={post.postTime}
+                song={post.item.song}
+                artist={post.item.artist}
+                caption={post.item.artist}
+                liked={post.item.liked}
+                mood={post.item.mood}
+                userId={post.item.userId}
+                replies={post.item.replies}
+                postTime={post.item.postTime}
               />
             );
           }}
@@ -208,27 +212,7 @@ function HomeScreen(props) {
 }
 
 function Post(props) {
-  const { song, artist, caption, mood, userID, liked, replies } = props;
-
-  const dispatch = useDispatch();
-
-  const addNewLikedSong = (props) => {
-    const { song, artist, caption, mood, userID, liked, replies } = props;
-    const action = {
-      type: ADD_LIKED_SONG,
-      payload: {
-        song: song,
-        artist: artist,
-        caption: caption,
-        mood: mood,
-        userID: userID,
-        liked: true,
-        replies: replies,
-        userDocID: auth.currentUser?.uid,
-      },
-    };
-    saveAndDispatch(action, dispatch);
-  };
+  const { song, artist, caption, mood, userId, liked, replies } = props;
 
   return (
     <View
@@ -249,7 +233,7 @@ function Post(props) {
           left: 12,
         }}
       >
-        {userID} is feeling: {mood}
+        {userId} is feeling: {mood}
       </Text>
       <View style={styles.moosicWidget}>
         <View
@@ -308,7 +292,7 @@ function Post(props) {
       >
         <TouchableOpacity>
           <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
-            {/* {replies[0].userID} */} UserID
+            {replies[0].userID}
           </Text>
         </TouchableOpacity>
         <View style={styles.replyWidget}>
@@ -317,9 +301,9 @@ function Post(props) {
           </View>
           <View style={{ flex: 0.5, justifyContent: "center" }}>
             <Text style={{ fontWeight: "600", fontSize: 18 }}>
-              {/* {replies[0].song} */} Song
+              {replies[0].song}
             </Text>
-            <Text>{/* {replies[0].artist} */} Artist</Text>
+            <Text>{replies[0].artist} Artist</Text>
           </View>
         </View>
       </View>
@@ -355,7 +339,7 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   feed: {
-    flex: 0.65,
+    flex: 0.85,
     width: "100%",
   },
   moosicWidget: {
