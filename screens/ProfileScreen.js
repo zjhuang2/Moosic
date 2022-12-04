@@ -198,7 +198,7 @@ function ProfileScreen(props) {
 
                 </View>
 
-                <View style = {styles.replies}>
+                <View>
                     <FlatList
                         data = {item.replies}
                         renderItem = {({item}) => {
@@ -212,11 +212,7 @@ function ProfileScreen(props) {
                             )
                         }}
                     />
-
                 </View>
-
-                <View style = {{backgroundColor: 'gray', height: 1, marginTop: 20}}></View>
-
             </View>
         )
 
@@ -233,7 +229,7 @@ function ProfileScreen(props) {
                         navigation.navigate('Mood')
                     }}
                 >
-                    <Text style = {{fontSize: 20}}>Moods</Text>
+                    <Text style = {styles.moodButton}>Top Mood Recs</Text>
                 </TouchableOpacity>
 
             </View>
@@ -253,14 +249,16 @@ function ProfileScreen(props) {
                 }}>Update Your Bio</Text>
                 </View>
 
-
-                <Input
-                    placeholder = {'Bio'}
-                    value = {userBio === '' ? grabUserBio() : userBio}
-                    onChangeText = {(newText) => 
-                        setUserBio(newText)
-                    }
-                />
+                <View>
+                    <Input
+                        placeholder = {'Bio'}
+                        multiline = {true}
+                        value = {userBio === '' ? grabUserBio() : userBio}
+                        onChangeText = {(newText) => 
+                            setUserBio(newText)
+                        }
+                    />
+                </View>
 
                 <Button
                     title = "Save Changes"
@@ -344,8 +342,7 @@ export default ProfileScreen;
 const styles = StyleSheet.create({ 
 
     container: {
-        backgroundColor: '#EDEDED',
-        //paddingTop: 30,
+
     },
     profilePic : {
        // backgroundColor: 'yellow'
@@ -410,7 +407,7 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     }, 
     header: {
-        paddingTop: 107,
+        paddingTop: 78,
         backgroundColor: "#f5d7e0",
         width: "100%",
         alignItems: "center",
@@ -422,10 +419,7 @@ const styles = StyleSheet.create({
         color: "#e84878",
         fontWeight: "bold",
         paddingLeft: 50,
-        marginTop: -65
-    },
-    replies: {
-
+        top: -20
     },
     individualReplies: {
         backgroundColor: 'white',
@@ -445,9 +439,15 @@ const styles = StyleSheet.create({
     },
     repliesUserID: {
         fontSize: 15,
-        color: "#d93269",
+        //color: "#d93269",
         fontWeight: "bold",
         paddingBottom: 5,
+    },
+    moodButton : {
+        fontSize: 20,
+        color: "#d93269",
+        top: -20,
+        left: -50
     }
 
 });

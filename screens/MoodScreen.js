@@ -36,37 +36,6 @@ function MoodScreen(props) {
     //this will be an object of all the moods
     const [moods, setMoods] = useState();
 
-    // This will only work if we have a set of specific moods to choose from (happy, sad, tired, angry) - ask Jeremy and Manvitha
-    // Maybe put the lists on a different page and then just import it
-    //we could try with itunes API and just use mood as the query - wont be super accurate but whatever
-    const mockHappySongs = [
-        {
-            song: 'SIMPLY THE BEST',
-            artist: 'Black Eyed Peas, Anitta, El Alfa',
-            mood: 'happy'
-        },
-        {
-            song: 'Light Switch',
-            artist: 'Charlie Puth',
-            mood: 'happy'
-        },
-        {
-            song: 'Real Man',
-            artist: 'Behani, Ne-Yo',
-            mood: 'happy'
-        },
-        {
-            song: 'Bam Bam (feat. Ed Sheeran)',
-            artist: 'Camila Cabello, Ed Sheeran',
-            mood: 'happy'
-        },
-        {
-            song: 'Million Dollar Baby',
-            artist: 'Ava Max',
-            mood: 'happy'
-        }
-    ]
-
     useEffect(()=> {
         subscribeToSnapshot();
     }, []);
@@ -76,8 +45,6 @@ function MoodScreen(props) {
         if (snapshotUnsubscribe) {
           snapshotUnsubscribe();
         }
-    
-        console.log("SOMETHING HAPPENING???")
 
         const q = query(
             collection(db, 'users', currUserId, 'songCollection'),
@@ -97,22 +64,17 @@ function MoodScreen(props) {
 
         let filteredList = songsList.filter(elem => elem.liked === false);
 
-        //console.log(filteredList);
-
         let moodObject = {}
         for (let i = 0; i < filteredList.length; i++) {
             let currentSong = filteredList[i];
-            let currentMood = currentSong.mood;
-            //console.log("This is the current mood: ", currentMood);
+            let currentMood = currentSong.mood.toLowerCase();
 
             if (currentMood in moodObject) {
                 moodObject[currentMood] = moodObject[currentMood] + 1;
             } else {
                 moodObject[currentMood] = 0
             }
-            //console.log(moodObject);
         }
-
         setMoods(moodObject);
         setYourSongs(filteredList);
         });
@@ -122,29 +84,31 @@ function MoodScreen(props) {
     const grabMostMood = () => {
         let maxMood = Object.keys(moods).reduce(function(a, b){ return moods[a] > moods[b] ? a : b });
         setMaximumMood(maxMood);
-        grabSongRecommendations(maxMood);
-
-        // if (maxMood == 'happy') {
-        //     setRecommendedSongs(mockHappySongs);
-        // }
+        grabSongRecommendations(maxMood)
         return maxMood;
     }
 
     const grabSongRecommendations = async(mood) => {
-        console.log("THIS IS MY MAXIMUM MOOD", mood);
-        let baseURI = 'https://itunes.apple.com/search?media=music&entity=song&term=' + mood + '&limit=5';
+
+        let baseURI = 'https://itunes.apple.com/search?media=music&entity=song&term=' + mood + '&limit=8';
         let result = await fetch(baseURI);
         let myJson = await result.json()
 
         let results = myJson['results'];
-        console.log("These are my results", results)
 
         let searchTerm = mood;
-        let songsList = []
+        let songsList = [];
+        let artistNameList = [];
         for (let i = 0; i < results.length; i++) {
             let songObj = results[i];
             let artistName = songObj['artistName'];
             let songName = songObj['trackName'];
+            if (artistNameList.includes(artistName)) {
+                continue;
+            } else {
+                artistNameList.push(artistName);
+            }
+
             
             let newSongObj = {
                 artist: artistName,
@@ -155,15 +119,12 @@ function MoodScreen(props) {
             songsList.push(newSongObj);
         }
 
-        console.log("THIs is my songsList: ", songsList)
-
         setRecommendedSongs(songsList);
     }
 
 
     function SongRecommendations(props) {
         let {item} = props;
-        console.log("This is artist: ", item)
 
         return(
             <View style = {{paddingTop: 15,}}>
@@ -207,7 +168,6 @@ function MoodScreen(props) {
                 {maximumMood ? (<Text style = {styles.moodText}>You've felt {maximumMood.toUpperCase()} the most!</Text>):''}
                 {maximumMood ? (<Text style = {styles.checkRecsText}>Want to listen to more songs that make you {maximumMood}? Check out these songs:</Text>): ''}
             </View>
-                {/* Create a list of song recommendations (just hardcode them) */}
 
             <View style = {styles.songRecsList}>
                 <FlatList
@@ -231,7 +191,7 @@ export default MoodScreen;
 const styles = StyleSheet.create({ 
 
     header: {
-        height: 110,
+        height: 108,
         backgroundColor: "#f5d7e0",
         width: "100%",
         alignItems: "center",
