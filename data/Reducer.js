@@ -81,7 +81,7 @@ const loadFeed = (state, payload) => {
 };
 
 const addPostToFeed = (state, payload) => {
-  let { song, artist, caption, liked, mood, userId, replies, key, postTime } =
+  let { song, artist, caption, liked, mood, userId, replies, postTime } =
     payload;
   let { feedList } = state;
   let updatedFeedList = feedList.concat({
@@ -92,14 +92,12 @@ const addPostToFeed = (state, payload) => {
     mood: mood,
     userId: userId,
     replies: replies,
-    key: key,
     postTime: postTime,
   });
   return {
     ...state,
     feedList: updatedFeedList,
   };
-  console.log(updatedFeedList);
 };
 
 const loadUser = (state, payload) => {

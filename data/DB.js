@@ -199,7 +199,7 @@ const addLikedSongAndDispatch = async (action, dispatch) => {
 
 const addPostToFeedAndDispatch = async (action, dispatch) => {
   const { payload } = action;
-  const { song, artist, caption, liked, mood, userId, replies, key, postTime } =
+  const { song, artist, caption, liked, mood, userId, replies, postTime } =
     payload;
   const feedColl = collection(db, "moosicFeed");
 
@@ -211,7 +211,6 @@ const addPostToFeedAndDispatch = async (action, dispatch) => {
     mood: mood,
     userId: userId,
     replies: replies,
-    key: key,
     postTime: postTime,
   });
 

@@ -81,30 +81,25 @@ function HomeScreen(props) {
   const { navigation } = props;
   const dispatch = useDispatch();
 
-  const addPost = (
-    newSong,
-    newArtist,
-    newCaption,
-    newLiked = false,
-    newMood,
-    newUserId,
-    newReplies = [],
-    newPostTime = Date.now()
-  ) => {
+  const addPost = (newSong, newArtist, newCaption, newMood, newUserId) => {
     const action = {
       type: ADD_POST_TO_FEED,
       payload: {
         song: newSong,
         artist: newArtist,
         caption: newCaption,
-        liked: newLiked,
+        liked: false,
         mood: newMood,
         userId: newUserId,
-        replies: newReplies,
-        postTime: newPostTime,
+        replies: [],
+        postTime: Date.now(),
       },
     };
     saveAndDispatch(action, dispatch);
+    setInputArtist("");
+    setInputSong("");
+    setInputMood("");
+    setInputCaption("");
   };
 
   return (
@@ -193,10 +188,8 @@ function HomeScreen(props) {
                   inputSong,
                   inputArtist,
                   inputCaption,
-                  false, // liked -- defaulted false
                   inputMood,
-                  "userID", // userID -- placeholder for now!
-                  Date.now() // timestamp
+                  displayName
                 );
 
                 toggleOverlay();
@@ -290,21 +283,39 @@ function Post(props) {
           width: "100%",
         }}
       >
-        <TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
-            {replies[0].userID}
-          </Text>
-        </TouchableOpacity>
-        <View style={styles.replyWidget}>
-          <View style={{ flex: 0.3, justifyContent: "center" }}>
-            <Icon name="image" size={48} type="material" />
-          </View>
-          <View style={{ flex: 0.5, justifyContent: "center" }}>
-            <Text style={{ fontWeight: "600", fontSize: 18 }}>
-              {replies[0].song}
-            </Text>
-            <Text>{replies[0].artist} Artist</Text>
-          </View>
+        <FlatList
+          data={replies}
+          renderItem={(reply) => {
+            return (
+              <Comment
+                userId={reply.item.userId}
+                song={reply.item.song}
+                artist={reply.item.artist}
+              />
+            );
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
+function Comment(props) {
+  const { userId, song, artist } = props;
+  return (
+    <View>
+      <TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
+          {userId}
+        </Text>
+      </TouchableOpacity>
+      <View style={styles.replyWidget}>
+        <View style={{ flex: 0.3, justifyContent: "center" }}>
+          <Icon name="image" size={48} type="material" />
+        </View>
+        <View style={{ flex: 0.5, justifyContent: "center" }}>
+          <Text style={{ fontWeight: "600", fontSize: 18 }}>{song}</Text>
+          <Text>{artist}</Text>
         </View>
       </View>
     </View>
