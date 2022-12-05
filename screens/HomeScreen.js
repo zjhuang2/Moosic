@@ -7,15 +7,19 @@ import {
   ScrollView,
   Touchable,
 } from "react-native";
-import { Button, Icon, makeStyles } from "@rneui/base";
-import { Divider, Overlay, Input } from "@rneui/themed";
+import { Icon, makeStyles } from "@rneui/base";
+import { Divider, Overlay, Input, Button } from "@rneui/themed";
 import { useEffect, useState } from "react";
 
 import { getAuth, signOut } from "firebase/auth";
 import { getApps, initializeApp } from "firebase/app";
 import { firebaseConfig } from "../Secrets";
 import { onSnapshot, getFirestore, collection } from "firebase/firestore";
-import { ADD_LIKED_SONG } from "../data/Reducer.js";
+import {
+  ADD_LIKED_SONG,
+  ADD_POST_TO_FEED,
+  ADD_TO_YOUR_SONGS,
+} from "../data/Reducer.js";
 import { saveAndDispatch } from "../data/DB.js";
 import { useSelector, useDispatch } from "react-redux";
 import { FAB } from "@rneui/base";
@@ -31,45 +35,19 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 function HomeScreen(props) {
-  const mockData = [
-    {
-      song: "Anti-Hero",
-      artist: "Taylor Swift",
-      caption: "This is my go-to blah music.",
-      mood: "Sad",
-      userID: "bumgeebear",
-      liked: false,
-      replies: [
-        {
-          song: "Message in a Bottle",
-          artist: "Taylor Swift",
-          userID: "loyola250",
-        },
-      ],
-    },
-    {
-      song: "Higher Power",
-      artist: "ColdPlay",
-      caption: "I am feeling Inspired!",
-      mood: "Inspired",
-      userID: "chillwinds",
-      liked: true,
-      replies: [{ song: "Humankind", artist: "Coldplay", userID: "sourpatch" }],
-    },
-    {
-      song: "Hotel California",
-      artist: "Eagles",
-      caption: "Bored moments call for nostalgias.",
-      mood: "Bored",
-      userID: "michigansaddlers",
-      liked: true,
-      replies: [{ song: "My Love", artist: "Westlife", userID: "amandal1999" }],
-    },
-  ];
+  let feedList = useSelector((state) => state.feedList);
 
   const [displayName, setDisplayName] = useState("");
   const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
   const [users, setUsers] = useState([]);
+  const [feed, setFeed] = useState([]);
+
+  // inputs
+  const [inputSong, setInputSong] = useState("");
+  const [inputArtist, setInputArtist] = useState("");
+  const [inputCaption, setInputCaption] = useState("");
+  const [inputMood, setInputMood] = useState("");
+
   const [overlayVisible, setOverlayVisible] = useState(false);
   const toggleOverlay = () => {
     setOverlayVisible(!overlayVisible);
@@ -90,9 +68,56 @@ function HomeScreen(props) {
       // console.log('updated users:', newUsers);
       setUsers(newUsers);
     });
+
+    onSnapshot(collection(db, "moosicFeed"), (qSnap) => {
+      let newFeed = [];
+      qSnap.forEach((docSnap) => {
+        let post = docSnap.data();
+        post.key = post.id;
+        newFeed.push(post);
+      });
+      setFeed(newFeed);
+    });
   }, []);
 
+  console.log(feed);
+
   const { navigation } = props;
+  const dispatch = useDispatch();
+
+  const addPost = (newSong, newArtist, newCaption, newMood, newUserId) => {
+    const action = {
+      type: ADD_POST_TO_FEED,
+      payload: {
+        song: newSong,
+        artist: newArtist,
+        caption: newCaption,
+        liked: false,
+        mood: newMood,
+        userId: newUserId,
+        replies: [],
+        postTime: Date.now(),
+      },
+    };
+    saveAndDispatch(action, dispatch);
+  };
+
+  const addToYourSong = (song, artist, caption, mood, replies, userId) => {
+    const action = {
+      type: ADD_TO_YOUR_SONGS,
+      payload: {
+        song: song,
+        artist: artist,
+        caption: caption,
+        liked: false,
+        mood: mood,
+        replies: replies,
+        userId: userId,
+        userDocID: auth.currentUser?.uid,
+      },
+    };
+    saveAndDispatch(action, dispatch);
+  };
 
   return (
     <View style={styles.container}>
@@ -109,37 +134,27 @@ function HomeScreen(props) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.feed}>
-        <Post
-          song={mockData[0].song}
-          artist={mockData[0].artist}
-          caption={mockData[0].caption}
-          mood={mockData[0].mood}
-          userID={mockData[0].userID}
-          liked={mockData[0].liked}
-          replies={mockData[0].replies}
+      <View style={styles.feed}>
+        <FlatList
+          data={feed}
+          renderItem={(post) => {
+            console.log("======");
+            console.log(post);
+            return (
+              <Post
+                song={post.item.song}
+                artist={post.item.artist}
+                caption={post.item.artist}
+                liked={post.item.liked}
+                mood={post.item.mood}
+                userId={post.item.userId}
+                replies={post.item.replies}
+                postTime={post.item.postTime}
+              />
+            );
+          }}
         />
-
-        <Post
-          song={mockData[1].song}
-          artist={mockData[1].artist}
-          caption={mockData[1].caption}
-          mood={mockData[1].mood}
-          userID={mockData[1].userID}
-          liked={mockData[1].liked}
-          replies={mockData[1].replies}
-        />
-
-        <Post
-          song={mockData[2].song}
-          artist={mockData[2].artist}
-          caption={mockData[2].caption}
-          mood={mockData[2].mood}
-          userID={mockData[2].userID}
-          liked={mockData[2].liked}
-          replies={mockData[2].replies}
-        />
-      </ScrollView>
+      </View>
 
       <FAB
         title="Post"
@@ -161,10 +176,57 @@ function HomeScreen(props) {
             <Text style={styles.headerTextOverlay}>Post new Moosic</Text>
           </View>
           <View>
-            <Input placeholder="Song" />
-            <Input placeholder="Artist" />
-            <Input placeholder="Your comments!" />
-            <Input placeholder="How are you feeling?" />
+            <Input
+              placeholder="Song"
+              value={inputSong}
+              onChangeText={(text) => setInputSong(text)}
+            />
+            <Input
+              placeholder="Artist"
+              value={inputArtist}
+              onChangeText={(text) => setInputArtist(text)}
+            />
+            <Input
+              placeholder="Your caption!"
+              value={inputCaption}
+              onChangeText={(text) => setInputCaption(text)}
+            />
+            <Input
+              placeholder="How are you feeling?"
+              value={inputMood}
+              onChangeText={(text) => setInputMood(text)}
+            />
+          </View>
+          <View>
+            <Button
+              color="secondary"
+              onPress={() => {
+                addPost(
+                  inputSong,
+                  inputArtist,
+                  inputCaption,
+                  inputMood,
+                  displayName
+                );
+
+                addToYourSong(
+                  inputSong,
+                  inputArtist,
+                  inputCaption,
+                  inputMood,
+                  [],
+                  displayName
+                );
+                setInputArtist("");
+                setInputSong("");
+                setInputMood("");
+                setInputCaption("");
+
+                toggleOverlay();
+              }}
+            >
+              Post
+            </Button>
           </View>
         </View>
       </Overlay>
@@ -173,12 +235,12 @@ function HomeScreen(props) {
 }
 
 function Post(props) {
-  const { song, artist, caption, mood, userID, liked, replies } = props;
+  const { song, artist, caption, mood, userId, liked, replies } = props;
 
   const dispatch = useDispatch();
 
   const addNewLikedSong = (props) => {
-    const { song, artist, caption, mood, userID, liked, replies } = props;
+    const { song, artist, caption, mood, userId, liked, replies } = props;
     const action = {
       type: ADD_LIKED_SONG,
       payload: {
@@ -186,7 +248,7 @@ function Post(props) {
         artist: artist,
         caption: caption,
         mood: mood,
-        userID: userID,
+        userID: userId,
         liked: true,
         replies: replies,
         userDocID: auth.currentUser?.uid,
@@ -214,7 +276,7 @@ function Post(props) {
           left: 12,
         }}
       >
-        {userID} is feeling: {mood}
+        {userId} is feeling: {mood}
       </Text>
       <View style={styles.moosicWidget}>
         <View
@@ -271,21 +333,39 @@ function Post(props) {
           width: "100%",
         }}
       >
-        <TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
-            {replies[0].userID}
-          </Text>
-        </TouchableOpacity>
-        <View style={styles.replyWidget}>
-          <View style={{ flex: 0.3, justifyContent: "center" }}>
-            <Icon name="image" size={48} type="material" />
-          </View>
-          <View style={{ flex: 0.5, justifyContent: "center" }}>
-            <Text style={{ fontWeight: "600", fontSize: 18 }}>
-              {replies[0].song}
-            </Text>
-            <Text>{replies[0].artist}</Text>
-          </View>
+        <FlatList
+          data={replies}
+          renderItem={(reply) => {
+            return (
+              <Comment
+                userId={reply.item.userId}
+                song={reply.item.song}
+                artist={reply.item.artist}
+              />
+            );
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
+function Comment(props) {
+  const { userId, song, artist } = props;
+  return (
+    <View>
+      <TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
+          {userId}
+        </Text>
+      </TouchableOpacity>
+      <View style={styles.replyWidget}>
+        <View style={{ flex: 0.3, justifyContent: "center" }}>
+          <Icon name="image" size={48} type="material" />
+        </View>
+        <View style={{ flex: 0.5, justifyContent: "center" }}>
+          <Text style={{ fontWeight: "600", fontSize: 18 }}>{song}</Text>
+          <Text>{artist}</Text>
         </View>
       </View>
     </View>
@@ -320,7 +400,7 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   feed: {
-    flex: 0.65,
+    flex: 0.85,
     width: "100%",
   },
   moosicWidget: {
