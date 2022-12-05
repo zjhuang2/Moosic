@@ -374,14 +374,14 @@ const styles = StyleSheet.create({
         borderStyle: 'solid',
         borderColor: 'gray',
         backgroundColor: 'white',
-        borderRadius: 20,
+        borderRadius: 10,
         paddingLeft: 20,
         paddingRight: 30,
         paddingTop: 15,
         paddingBottom: 10,
         shadowRadius: 24,
-        shadowOffset: {width: -7, height: 0},
-        shadowOpacity: 0.1,
+        //shadowOffset: {width: -7, height: 0},
+        //shadowOpacity: 0.1,
 
     },
     listContainer : {
