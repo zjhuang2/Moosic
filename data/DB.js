@@ -23,6 +23,7 @@ import {
   UPDATE_USER,
   LOAD_FEED,
   ADD_POST_TO_FEED,
+  ADD_TO_YOUR_SONGS,
 } from "./Reducer";
 
 let app,
@@ -77,6 +78,10 @@ const saveAndDispatch = async (action, dispatch) => {
 
     case ADD_POST_TO_FEED:
       addPostToFeedAndDispatch(action, dispatch);
+      return;
+
+    case ADD_TO_YOUR_SONGS:
+      addPostToYourSongsAndDispatch(action, dispatch);
       return;
   }
 };
@@ -212,6 +217,35 @@ const addPostToFeedAndDispatch = async (action, dispatch) => {
     userId: userId,
     replies: replies,
     postTime: postTime,
+  });
+
+  const newPayload = {
+    ...payload,
+    key: newPostDocRef.id,
+  };
+
+  const newAction = {
+    ...action,
+    payload: newPayload,
+  };
+  dispatch(newAction);
+};
+
+const addPostToYourSongsAndDispatch = async (action, dispatch) => {
+  const { payload } = action;
+  const { song, artist, caption, liked, mood, replies, userId, userDocID } =
+    payload;
+  const feedColl = collection(db, "users", userDocID, "songCollection");
+
+  const newPostDocRef = await addDoc(feedColl, {
+    song: song,
+    artist: artist,
+    caption: caption,
+    liked: liked,
+    mood: mood,
+    replies: replies,
+    userID: userId,
+    userDocID: userDocID,
   });
 
   const newPayload = {

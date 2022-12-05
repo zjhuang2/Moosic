@@ -15,7 +15,11 @@ import { getAuth, signOut } from "firebase/auth";
 import { getApps, initializeApp } from "firebase/app";
 import { firebaseConfig } from "../Secrets";
 import { onSnapshot, getFirestore, collection } from "firebase/firestore";
-import { ADD_LIKED_SONG, ADD_POST_TO_FEED } from "../data/Reducer.js";
+import {
+  ADD_LIKED_SONG,
+  ADD_POST_TO_FEED,
+  ADD_TO_YOUR_SONGS,
+} from "../data/Reducer.js";
 import { saveAndDispatch } from "../data/DB.js";
 import { useSelector, useDispatch } from "react-redux";
 import { FAB } from "@rneui/base";
@@ -96,10 +100,23 @@ function HomeScreen(props) {
       },
     };
     saveAndDispatch(action, dispatch);
-    setInputArtist("");
-    setInputSong("");
-    setInputMood("");
-    setInputCaption("");
+  };
+
+  const addToYourSong = (song, artist, caption, mood, replies, userId) => {
+    const action = {
+      type: ADD_TO_YOUR_SONGS,
+      payload: {
+        song: song,
+        artist: artist,
+        caption: caption,
+        liked: false,
+        mood: mood,
+        replies: replies,
+        userId: userId,
+        userDocID: auth.currentUser?.uid,
+      },
+    };
+    saveAndDispatch(action, dispatch);
   };
 
   return (
@@ -192,6 +209,19 @@ function HomeScreen(props) {
                   displayName
                 );
 
+                addToYourSong(
+                  inputSong,
+                  inputArtist,
+                  inputCaption,
+                  inputMood,
+                  [],
+                  displayName
+                );
+                setInputArtist("");
+                setInputSong("");
+                setInputMood("");
+                setInputCaption("");
+
                 toggleOverlay();
               }}
             >
@@ -206,6 +236,26 @@ function HomeScreen(props) {
 
 function Post(props) {
   const { song, artist, caption, mood, userId, liked, replies } = props;
+
+  const dispatch = useDispatch();
+
+  const addNewLikedSong = (props) => {
+    const { song, artist, caption, mood, userId, liked, replies } = props;
+    const action = {
+      type: ADD_LIKED_SONG,
+      payload: {
+        song: song,
+        artist: artist,
+        caption: caption,
+        mood: mood,
+        userID: userId,
+        liked: true,
+        replies: replies,
+        userDocID: auth.currentUser?.uid,
+      },
+    };
+    saveAndDispatch(action, dispatch);
+  };
 
   return (
     <View

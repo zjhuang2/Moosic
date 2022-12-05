@@ -8,6 +8,7 @@ const UPDATE_USER = "UPDATE_USER";
 const LOAD_LIKED_SONGS = "LOAD_LIKED_SONGS";
 const DELETE_LIKED_SONGS = "DELETE_LIKED_SONGS";
 const ADD_LIKED_SONG = "ADD_LIKED_SONG";
+const ADD_TO_YOUR_SONGS = "ADD_TO_YOUR_SONGS";
 
 const LOAD_YOUR_SONGS = "LOAD_YOUR_SONGS";
 
@@ -97,6 +98,26 @@ const addPostToFeed = (state, payload) => {
   return {
     ...state,
     feedList: updatedFeedList,
+  };
+};
+
+const addPostToYourSongs = (state, payload) => {
+  let { song, artist, caption, liked, mood, replies, userId, userDocID } =
+    payload;
+  let { yourSongPostsList } = state;
+  let updatedYourSongsList = yourSongPostsList.concat({
+    song: song,
+    artist: artist,
+    caption: caption,
+    liked: liked,
+    mood: mood,
+    replies: replies,
+    userID: userId,
+    userDocID: userDocID,
+  });
+  return {
+    ...state,
+    yourSongPostsList: updatedYourSongsList,
   };
 };
 
@@ -204,6 +225,8 @@ function rootReducer(state = initialState, action) {
       return loadFeed(state, payload);
     case ADD_POST_TO_FEED:
       return addPostToFeed(state, payload);
+    case ADD_TO_YOUR_SONGS:
+      return addPostToYourSongs(state, payload);
     default:
       return state;
   }
@@ -220,4 +243,5 @@ export {
   UPDATE_USER,
   LOAD_FEED,
   ADD_POST_TO_FEED,
+  ADD_TO_YOUR_SONGS,
 };
