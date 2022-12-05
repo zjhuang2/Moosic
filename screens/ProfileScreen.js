@@ -128,7 +128,7 @@ function ProfileScreen(props) {
             let filterLikedSongs = songsList.filter(elem => elem.liked === true);
             setCurrentTabList(filterLikedSongs);
         }
-        });
+     });
     }    
 
     const updateUser = () => {
