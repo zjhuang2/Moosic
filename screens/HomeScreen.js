@@ -296,12 +296,14 @@ function Post(props) {
             justifyContent: "center",
           }}
         >
-          <View style={{ flex: 0.4 }}>
+          <View style={{ flex: 0.4, marginBottom: 5 }}>
             <Text style={{ fontWeight: "700", fontSize: 20 }}>{song}</Text>
             <Text style={{ fontWeight: "500", fontSize: 14 }}>{artist}</Text>
           </View>
           <View style={{ flex: 0.3 }}>
-            <Text>{caption}</Text>
+            <Text style={{ fontWeight: "500", fontSize: 16, color: "#d11355" }}>
+              {caption}
+            </Text>
           </View>
         </View>
         <View
@@ -425,7 +427,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     flexDirection: "row",
-    height: 100,
+    height: 150,
   },
   replyWidget: {
     width: "90%",
