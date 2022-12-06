@@ -191,7 +191,7 @@ export default MoodScreen;
 const styles = StyleSheet.create({ 
 
     header: {
-        height: 108,
+        height: 122,
         backgroundColor: "#f5d7e0",
         width: "100%",
         alignItems: "center",

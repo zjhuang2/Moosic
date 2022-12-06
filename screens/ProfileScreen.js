@@ -4,8 +4,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import { saveAndDispatch } from "../data/DB.js";
 import { LOAD_USER, LOAD_LIKED_SONGS, DELETE_LIKED_SONGS, LOAD_YOUR_SONGS, UPDATE_USER} from "../data/Reducer.js";
 import Images from '../Images.js';
-import { FAB } from "@rneui/base";
-import { Overlay, Input } from "@rneui/themed";
+import { FAB , Icon} from "@rneui/base";
+import { Overlay, Input , Divider} from "@rneui/themed";
 
 //Firebase stuff
 import { 
@@ -171,29 +171,33 @@ function ProfileScreen(props) {
 
                 <View style = {styles.individualSongContainer}>
 
-                    <View>
-                        <Ionicons name = 'image' size = {80} color = 'gray'/>
+                    <View style = {{left: -10}}>
+                        {/* <Ionicons name = 'image' size = {80} color = 'gray'/> */}
+                        <Icon name="image" size={96} type="material" />
                     </View>
 
                     <View style = {styles.songText}>
 
                         <Text style = {{fontSize: 20, fontWeight: '700'}}>{item.song}</Text>
 
-                        <Text style = {{paddingTop: 5, paddingBottom: 15, fontWeight: '500'}}>{item.artist}</Text>
+                        <Text style = {{fontWeight: '500'}}>{item.artist}</Text>
 
-                        <Text>{item.caption}</Text>
+                        <Text style = {{color: "#d93269", paddingTop: 10}}>{item.caption}</Text>
                     
                     </View>
 
-                    <View style = {styles.likeButton}>
+                    {/* <View style = {{justifyContent: 'center', alignItems: 'flex-end'}}> */}
+                    <View style = {{justifyContent: 'center', flex: 1}}>
+                        <View style = {styles.likeButton}>
 
-                        <TouchableOpacity
-                            onPress={() => {
-                                deleteLikedSong(item);
-                            }}>
-                                {item.liked == true?(<Ionicons name = 'heart' size = {25} color = 'red'/>): <Ionicons name = 'trash' size = {25} color = 'gray'/>}
-                        </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    deleteLikedSong(item);
+                                }}>
+                                    {item.liked == true?(<Ionicons name = 'heart' size = {25} color = 'red'/>): <Ionicons name = 'trash' size = {25} color = 'gray'/>}
+                            </TouchableOpacity>
 
+                        </View>
                     </View>
 
                 </View>
@@ -206,16 +210,23 @@ function ProfileScreen(props) {
                                 <View style = {{paddingTop: 20}}>
                                     <Text style = {styles.repliesUserID}>{item.userID} recommends:</Text>
                                     <View style = {styles.individualReplies}>
-                                        <Text style = {{fontWeight: '700'}}>{item.song} by {item.artist}</Text>
+                                        <Icon name="image" size={48} type="material" />
+                                        <View style = {{justifyContent: 'center', paddingLeft: 30}}>
+                                            <Text style = {{fontWeight: '600', fontSize: 18}}>{item.song}</Text>
+                                            <Text>{item.artist}</Text>
+                                        </View>
+                                        {/* <Text style = {{fontWeight: '700'}}>{item.song} by {item.artist}</Text> */}
                                     </View>
                                 </View>
                             )
                         }}
                     />
                 </View>
+                <View style = {{alignItems: 'center'}}>
+                    <Divider color="#ab2448" style={{ width: "80%", paddingTop: 30}} />
+                </View>
             </View>
         )
-
     }
 
     return (
@@ -370,15 +381,15 @@ const styles = StyleSheet.create({
     },
     individualSongContainer : {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        //justifyContent: 'space-between',
         borderStyle: 'solid',
         borderColor: 'gray',
         backgroundColor: 'white',
-        borderRadius: 10,
+        borderRadius: 15,
         paddingLeft: 20,
         paddingRight: 30,
-        paddingTop: 15,
-        paddingBottom: 10,
+        paddingTop: 5,
+        paddingBottom: 5,
         shadowRadius: 24,
         //shadowOffset: {width: -7, height: 0},
         //shadowOpacity: 0.1,
@@ -392,11 +403,10 @@ const styles = StyleSheet.create({
         
     },
     songText : {
-
+        paddingTop: 10
     },
     likeButton : {
         alignItems: 'flex-end',
-        //backgroundColor: 'yellow',
         justifyContent: 'center',
     },
     allSongsLists : {
@@ -407,7 +417,7 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     }, 
     header: {
-        paddingTop: 78,
+        paddingTop: 93,
         backgroundColor: "#f5d7e0",
         width: "100%",
         alignItems: "center",
@@ -419,14 +429,15 @@ const styles = StyleSheet.create({
         color: "#e84878",
         fontWeight: "bold",
         paddingLeft: 50,
-        top: -20
+        top: -27
     },
     individualReplies: {
         backgroundColor: 'white',
-        borderRadius: '5',
-        paddingTop: 10,
-        paddingBottom: 10,
-        paddingLeft: 10,
+        borderRadius: '10',
+        paddingTop: 5,
+        paddingBottom: 5,
+        paddingLeft: 30,
+        flexDirection: 'row'
     },
     userIDPost: {
         fontSize: 20,
@@ -438,15 +449,15 @@ const styles = StyleSheet.create({
         paddingBottom: 5,
     },
     repliesUserID: {
-        fontSize: 15,
+        fontSize: 16,
         //color: "#d93269",
         fontWeight: "bold",
         paddingBottom: 5,
     },
     moodButton : {
-        fontSize: 20,
+        fontSize: 18,
         color: "#d93269",
-        top: -20,
+        top: -28,
         left: -50
     }
 
