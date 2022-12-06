@@ -144,7 +144,7 @@ function HomeScreen(props) {
               <Post
                 song={post.item.song}
                 artist={post.item.artist}
-                caption={post.item.artist}
+                caption={post.item.caption}
                 liked={post.item.liked}
                 mood={post.item.mood}
                 userId={post.item.userId}
@@ -325,6 +325,20 @@ function Post(props) {
           )}
         </View>
       </View>
+      <View style={{ width: "60%" }}>
+        <Button
+          buttonStyle={{
+            backgroundColor: "pink",
+            marginTop: 10,
+            height: 35,
+            borderRadius: 20,
+          }}
+          titleStyle={{ fontWeight: "600", fontSize: 14, color: "#821a36" }}
+        >
+          Recommend a Song
+        </Button>
+      </View>
+
       <View
         style={{
           alignSelf: "flex-start",
@@ -333,12 +347,13 @@ function Post(props) {
           width: "100%",
         }}
       >
+        <View></View>
         <FlatList
           data={replies}
           renderItem={(reply) => {
             return (
               <Comment
-                userId={reply.item.userId}
+                userId={reply.item.userID}
                 song={reply.item.song}
                 artist={reply.item.artist}
               />
@@ -346,6 +361,7 @@ function Post(props) {
           }}
         />
       </View>
+      <Divider color="#ab2448" style={{ width: "80%" }} />
     </View>
   );
 }
@@ -355,8 +371,8 @@ function Comment(props) {
   return (
     <View>
       <TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 5 }}>
-          {userId}
+        <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 5 }}>
+          {userId} recommends:
         </Text>
       </TouchableOpacity>
       <View style={styles.replyWidget}>
@@ -409,7 +425,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     flexDirection: "row",
-    height: 180,
+    height: 100,
   },
   replyWidget: {
     width: "90%",
@@ -417,7 +433,8 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     flexDirection: "row",
-    height: 70,
+    height: 55,
+    marginBottom: 10,
   },
   footerMenu: {
     flex: 0.1,
