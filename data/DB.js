@@ -119,7 +119,7 @@ const loadUserAndDispatch = async (action, dispatch) => {
 };
 
 const updateUserAndDispatch = async (action, dispatch) => {
-  console.log(action);
+  //console.log(action);
   const { payload } = action;
   const { userBio, key } = payload;
 
@@ -175,7 +175,7 @@ const addLikedSongAndDispatch = async (action, dispatch) => {
   const { song, artist, caption, mood, userID, liked, replies, userDocID } =
     payload;
 
-  console.log(action);
+  //console.log(action);
   const coll = collection(db, "users", userDocID, "songCollection");
 
   const newSongDocRef = await addDoc(coll, {

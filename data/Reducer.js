@@ -134,7 +134,7 @@ const loadUser = (state, payload) => {
 const addUser = () => {};
 
 const updateUser = () => {
-  console.log("not doing anything");
+  //console.log("not doing anything");
 };
 
 const loadLikedSongs = (state, payload) => {
@@ -195,8 +195,8 @@ const addLikedSong = (state, payload) => {
   });
 
   //console.log(updatedSongList);
-  console.log("UPDATED SONGS LIST: ", updatedSongList);
-  console.log("Current SONGS LIST: ", likedSongsList);
+  // console.log("UPDATED SONGS LIST: ", updatedSongList);
+  // console.log("Current SONGS LIST: ", likedSongsList);
 
   return {
     ...state,

@@ -14,7 +14,10 @@ import { useEffect, useState } from "react";
 import { getAuth, signOut } from "firebase/auth";
 import { getApps, initializeApp } from "firebase/app";
 import { firebaseConfig } from "../Secrets";
-import { onSnapshot, getFirestore, collection } from "firebase/firestore";
+import { 
+  getFirestore, initializeFirestore, collection, getDocs, query, orderBy, limit,
+  where, doc, addDoc, getDoc, onSnapshot
+} from "firebase/firestore";
 import {
   ADD_LIKED_SONG,
   ADD_POST_TO_FEED,
@@ -34,8 +37,12 @@ if (apps.length == 0) {
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+let snapshotUnsubscribe = undefined;
+
 function HomeScreen(props) {
   let feedList = useSelector((state) => state.feedList);
+  let likedSongs = useSelector((state) => state.likedSongsList);
+  //console.log("THESE ARE MY LIKED SONGS FROM MY USESELECTOR:", likedSongs);
 
   const [displayName, setDisplayName] = useState("");
   const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
@@ -64,23 +71,46 @@ function HomeScreen(props) {
         }
         newUsers.push(newUser);
       });
-      // console.log('currUserId:', currUserId)
-      // console.log('updated users:', newUsers);
       setUsers(newUsers);
     });
 
-    onSnapshot(collection(db, "moosicFeed"), (qSnap) => {
-      let newFeed = [];
-      qSnap.forEach((docSnap) => {
-        let post = docSnap.data();
-        post.key = post.id;
-        newFeed.push(post);
-      });
-      setFeed(newFeed);
-    });
+
+    if (snapshotUnsubscribe) {
+      snapshotUnsubscribe();
+    }
+
+    const q = query(
+      collection(db, "moosicFeed"),
+      orderBy('postTime', 'desc'),
+    );
+
+    snapshotUnsubscribe = onSnapshot(q, (qSnap)=> {
+      let posts = [];
+      //console.log("It went through")
+      qSnap.docs.forEach((docSnap) => {
+        let postContent = docSnap.data()
+        //console.log(postContent);
+        postContent.key = postContent.id;
+        posts.push(postContent);
+      })
+
+      console.log("THESE ARE MY ORDERED POSTS:", posts)
+      setFeed(posts);
+    })
+
+    // onSnapshot(collection(db, "moosicFeed"), (qSnap) => {
+    //   let newFeed = [];
+    //   qSnap.forEach((docSnap) => {
+    //     let post = docSnap.data();
+    //     post.key = post.id;
+    //     newFeed.push(post);
+    //   });
+    //   setFeed(newFeed);
+    // });
+
   }, []);
 
-  console.log(feed);
+  //console.log(feed);
 
   const { navigation } = props;
   const dispatch = useDispatch();
@@ -138,8 +168,6 @@ function HomeScreen(props) {
         <FlatList
           data={feed}
           renderItem={(post) => {
-            console.log("======");
-            console.log(post);
             return (
               <Post
                 song={post.item.song}
@@ -236,6 +264,7 @@ function HomeScreen(props) {
 
 function Post(props) {
   const { song, artist, caption, mood, userId, liked, replies } = props;
+  let likedSongs = useSelector((state) => state.likedSongsList);
 
   const dispatch = useDispatch();
 
@@ -256,6 +285,25 @@ function Post(props) {
     };
     saveAndDispatch(action, dispatch);
   };
+
+  const grabLikedIcon = (artist, song) => {
+
+    for (let i = 0; i< likedSongs.length; i++) {
+      let currentSong = likedSongs[i];
+      // console.log("This is my current song in the likedSongs list:", currentSong);
+      // console.log(currentSong.artist);
+      // console.log(currentSong.song);
+      // console.log(currentSong.liked);
+
+      if (artist === currentSong.artist && song === currentSong.song) {
+        
+        //console.log("THIS IS THE SAME ARTIST AND SONG AND LIKED");
+        return <Icon name="favorite" type="material" color="red" />
+      }
+    }
+    return <Icon name="favorite" type="material" color="grey" />
+
+  }
 
   return (
     <View
@@ -311,6 +359,17 @@ function Post(props) {
             justifyContent: "center",
           }}
         >
+          <TouchableOpacity
+            onPress = {() => {
+              addNewLikedSong(props);
+            }}
+          >
+          {grabLikedIcon(artist, song)}
+          </TouchableOpacity>
+{/* 
+
+          {console.log("===================")}
+          {console.log(song)}
           {liked ? (
             <Icon name="favorite" type="material" color="red" />
           ) : (
@@ -318,14 +377,16 @@ function Post(props) {
               onPress={() => {
                 //add to my song collection
                 addNewLikedSong(props);
+                //grabIcon();
               }}
             >
               <Icon name="favorite" type="material" color="grey" />
             </TouchableOpacity>
-          )}
+          )} */}
         </View>
       </View>
       <View style={{ width: "60%" }}>
+        {/* add an onPress handler to this button that opens an overlay */}
         <Button
           buttonStyle={{
             backgroundColor: "pink",
@@ -447,3 +508,53 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+
+
+
+
+//   const grabIcon = (props) => {
+//     const { song, artist, caption, mood, userId, liked, replies } = props;
+//     console.log(song);
+
+//     if (snapshotUnsubscribe) {
+//       snapshotUnsubscribe();
+//     }
+
+//     const q = query(
+//     collection(db, 'users', auth.currentUser?.uid, 'songCollection'),
+//     ); 
+
+
+//     snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
+//     let songsList = [];
+    
+//     qSnap.docs.forEach((docSnap)=>{
+//         let song_info = docSnap.data();
+//         song_info.key = docSnap.id;
+//         songsList.push(song_info);
+        
+//     });
+
+//    for (let i = 0; i < songsList.length; i++) {
+//     let currentSong = songsList[i];
+
+//     console.log("This is my current song: ", currentSong.song);
+//     console.log("This is my current artist: ", currentSong.artist);
+//     console.log("This is my current liked status: ", currentSong.liked);
+
+//     console.log("This is my song I passed in: ", song);
+//     console.log("This is my artist I passed in: ", artist);
+//     console.log("This is my liked status I passed in: ", liked);
+
+//     if (currentSong.song === song && currentSong.artist === artist && currentSong.liked === true) {
+//       console.log("THIS SONG IS LIKED");
+//       return <Text>Hello World</Text>
+//       //<Icon name="favorite" type="material" color="red" />
+//     }
+
+//    }
+//     console.log("NEVER WENT INTO THE IF STATEMENT");
+//    return <Text>Bad World</Text>
+//    //<Icon name="favorite" type="material" color="grey" />
+//   })
+// }
