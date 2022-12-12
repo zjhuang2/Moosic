@@ -24,6 +24,7 @@ import {
   LOAD_FEED,
   ADD_POST_TO_FEED,
   ADD_TO_YOUR_SONGS,
+  ADD_COMMENT,
 } from "./Reducer";
 
 let app,
@@ -82,6 +83,10 @@ const saveAndDispatch = async (action, dispatch) => {
 
     case ADD_TO_YOUR_SONGS:
       addPostToYourSongsAndDispatch(action, dispatch);
+      return;
+
+    case ADD_COMMENT:
+      addCommentAndDispatch(action, dispatch);
       return;
   }
 };
@@ -259,6 +264,94 @@ const addPostToYourSongsAndDispatch = async (action, dispatch) => {
   };
   dispatch(newAction);
 };
+
+
+
+const addCommentAndDispatch = async (action, dispatch) => {
+ // console.log(action);
+  const {payload} = action;
+  //console.log(payload);
+  const { song, artist, caption, mood, userID, liked, replies, postTime, recommendedArtist, recommendedSong, key } = payload;
+
+  console.log(userID);
+  console.log("This is the key in DB.js", key);
+  // if (snapshotUnsubscribe) {
+  //   snapshotUnsubscribe();
+  // }
+
+  // const q = query(collection(db, FEEDCOLLECTION));
+
+  // let documentKey = '';
+
+  // //console.log("This is the current replies", replies);
+
+  let newReplies = [{
+    artist: recommendedArtist,
+    song: recommendedSong,
+    userId: userID,
+  }]
+  //console.log(newReplies);
+
+  let copyOfReplies = replies.concat(newReplies);
+
+  console.log("This is my copy of the replies list", copyOfReplies);
+
+  const docToUpdate = doc(collection(db, "moosicFeed"), key);
+
+  await updateDoc(docToUpdate, {
+    replies: copyOfReplies
+  });
+
+  dispatch(action);
+
+}
+
+  // if (snapshotUnsubscribe) {
+  //   snapshotUnsubscribe();
+  // }
+  // const q = query(collection(db, FEEDCOLLECTION));
+  // snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
+  //   let feedList = [];
+  //   qSnap.docs.forEach((docSnap) => {
+  //     let post = docSnap.data();
+  //     post.key = post.id;
+  //     feedList.push(post);
+  //   });
+  //   let newAction = {
+  //     ...action,
+  //     payload: {
+  //       feedList: feedList,
+  //     },
+  //   };
+  //   dispatch(newAction);
+  // });
+
+
+
+
+
+  // snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
+  //   let feedSongsList = [];
+
+  //   qSnap.docs.forEach((docSnap) => {
+  //     let songPost = docSnap.data();
+  //     songPost.key = docSnap.id;
+  //     feedSongsList.push(songPost);
+  //   })
+    
+  //   for (let i = 0; i < feedSongsList.length; i++) {
+  //     let currentPostSong = feedSongsList[i];
+
+  //     if (currentPostSong.postTime === postTime && currentPostSong.song === song & currentPostSong.artist === artist) {
+  //       console.log("THIS IS THE SONG II'M LOOOKING FOR: ", currentPostSong.song);
+  //       //console.log(currentPostSong.key)
+  //       documentKey = currentPostSong.key;
+  //       console.log("This is documentkey inside the snapshotunsubscribe:", documentKey)
+  //     }
+  //   }
+    
+  // })
+
 
 //II THINK THIS IS USELESS
 // const loadLikedSongsAndDispatch = async (action, dispatch) => {

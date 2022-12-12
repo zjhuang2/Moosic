@@ -208,7 +208,7 @@ function ProfileScreen(props) {
                         renderItem = {({item}) => {
                             return (
                                 <View style = {{paddingTop: 20}}>
-                                    <Text style = {styles.repliesUserID}>{item.userID} recommends:</Text>
+                                    <Text style = {styles.repliesUserID}>{item.userId} recommends:</Text>
                                     <View style = {styles.individualReplies}>
                                         <Icon name="image" size={48} type="material" />
                                         <View style = {{justifyContent: 'center', paddingLeft: 30}}>

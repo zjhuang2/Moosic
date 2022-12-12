@@ -15,6 +15,8 @@ const LOAD_YOUR_SONGS = "LOAD_YOUR_SONGS";
 const LOAD_FEED = "LOAD_FEED";
 const ADD_POST_TO_FEED = "ADD_POST_TO_FEED";
 
+const ADD_COMMENT = "ADD_COMMENT";
+
 //initial list of Users (just for testing)
 const initialUsersList = [
   { name: "Janice", bio: "hello, my name is Janice!", key: 2 },
@@ -70,6 +72,7 @@ const initialState = {
   likedSongsList: initialLikedSongList,
   yourSongPostsList: initialYourSongs,
   feedList: initialFeed,
+  updateVariable: ''
 };
 
 // load the feeds
@@ -204,6 +207,17 @@ const addLikedSong = (state, payload) => {
   };
 };
 
+const addComment = (state, payload) => {
+  console.log(payload);
+  const {song} = payload;
+
+  return {
+    ...state,
+    updateVariable: song
+  }
+
+}
+
 function rootReducer(state = initialState, action) {
   const { type, payload } = action;
   switch (type) {
@@ -227,6 +241,8 @@ function rootReducer(state = initialState, action) {
       return addPostToFeed(state, payload);
     case ADD_TO_YOUR_SONGS:
       return addPostToYourSongs(state, payload);
+    case ADD_COMMENT:
+      return addComment(state, payload);
     default:
       return state;
   }
@@ -244,4 +260,5 @@ export {
   LOAD_FEED,
   ADD_POST_TO_FEED,
   ADD_TO_YOUR_SONGS,
+  ADD_COMMENT,
 };
