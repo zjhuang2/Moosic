@@ -24,6 +24,7 @@ import {
   LOAD_FEED,
   ADD_POST_TO_FEED,
   ADD_TO_YOUR_SONGS,
+  ADD_COMMENT,
 } from "./Reducer";
 
 let app,
@@ -83,6 +84,10 @@ const saveAndDispatch = async (action, dispatch) => {
     case ADD_TO_YOUR_SONGS:
       addPostToYourSongsAndDispatch(action, dispatch);
       return;
+
+    case ADD_COMMENT:
+      addCommentAndDispatch(action, dispatch);
+      return;
   }
 };
 
@@ -138,16 +143,16 @@ const loadFeedAndDispatch = async (action, dispatch) => {
   }
   const q = query(collection(db, FEEDCOLLECTION));
   snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
-    let feedList = [];
+    let newFeedList = [];
     qSnap.docs.forEach((docSnap) => {
       let post = docSnap.data();
-      post.key = post.id;
-      feedList.push(post);
+      post.key = docSnap.id;
+      newFeedList.push(post);
     });
     let newAction = {
       ...action,
       payload: {
-        feedList: feedList,
+        feedList: newFeedList,
       },
     };
     dispatch(newAction);
@@ -204,7 +209,7 @@ const addLikedSongAndDispatch = async (action, dispatch) => {
 
 const addPostToFeedAndDispatch = async (action, dispatch) => {
   const { payload } = action;
-  const { song, artist, caption, liked, mood, userId, replies, postTime } =
+  const { song, artist, caption, liked, mood, userId, replies, postTime, key } =
     payload;
   const feedColl = collection(db, "moosicFeed");
 
@@ -217,6 +222,7 @@ const addPostToFeedAndDispatch = async (action, dispatch) => {
     userId: userId,
     replies: replies,
     postTime: postTime,
+    key: key,
   });
 
   const newPayload = {
@@ -260,80 +266,20 @@ const addPostToYourSongsAndDispatch = async (action, dispatch) => {
   dispatch(newAction);
 };
 
-//II THINK THIS IS USELESS
-// const loadLikedSongsAndDispatch = async (action, dispatch) => {
-//     //I think I need the key of the user (document)
-//     //EDIT THIS SO THAT IT'S THE CURRENT USER'S ID
-//     let userID = "me38ADJpJRVR25ILljkQ";
+const addCommentAndDispatch = async (action, dispatch) => {
+  const { payload } = action;
+  const { song, artist, caption, liked, mood, replies, userId, key } = payload;
 
-//     if (snapshotUnsubscribe) {
-//         snapshotUnsubscribe();
-//     }
-
-//     const q = query(
-//         // collection(db, USERSCOLLECTION, userID , SONGCOLLECTION)
-//         collection(db, USERSCOLLECTION, auth.currentUser?.uid, SONGCOLLECTION)
-//     )
-
-//     snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
-
-//         let allSongsList = [];
-
-//         qSnap.docs.forEach((docSnap)=> {
-//             let song_info = docSnap.data();
-//             song_info.key = docSnap.id;
-//             allSongsList.push(song_info);
-//         })
-
-//         //only grabs the liked songs
-//         let filteredLikedSongs = allSongsList.filter(elem => elem.liked === true);
-
-//         let newAction = {
-//             ...action,
-//             payload: {filteredLikedSongs:filteredLikedSongs}
-//         };
-
-//         console.log("??????????????? all of my songs ?????", allSongsList)
-//         dispatch(newAction);
-//     });
-// }
-
-//II THINK THIS IS USELESS
-// const loadYourSongsAndDispatch = async (action, dispatch) => {
-
-//     //I think I need the key of the user (document)
-//     //EDIT THIS SO THAT IT'S THE CURRENT USER'S ID
-//     let userID = "me38ADJpJRVR25ILljkQ";
-
-//     if (snapshotUnsubscribe) {
-//         snapshotUnsubscribe();
-//     }
-
-//     //makes a query for the songs collection
-//     const q = query(
-//         collection(db, USERSCOLLECTION, userID , SONGCOLLECTION)
-//     )
-
-//     //goes through the query and grabs snapshot oof doocuments
-//     snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
-
-//         let allYourSongs = [];
-
-//         qSnap.docs.forEach((docSnap)=> {
-//             let song_info = docSnap.data();
-//             song_info.key = docSnap.id;
-//             allYourSongs.push(song_info);
-//         })
-
-//         //only grabs the songs YOU POSTED
-//         let filteredYourSongs = allYourSongs.filter(elem => elem.postedBy === 'me');
-
-//         let newAction = {
-//             ...action,
-//             payload: {filteredYourSongs:filteredYourSongs}
-//         };
-
-//         dispatch(newAction);
-//     });
-
-// }
+  const docToUpdate = doc(collection(db, "moosicFeed"), key);
+  await updateDoc(docToUpdate, {
+    song: song,
+    artist: artist,
+    caption: caption,
+    liked: liked,
+    mood: mood,
+    replies: replies,
+    userId: userId,
+    key: key,
+  });
+  dispatch(action);
+};

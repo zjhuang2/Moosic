@@ -16,9 +16,12 @@ import { getApps, initializeApp } from "firebase/app";
 import { firebaseConfig } from "../Secrets";
 import { onSnapshot, getFirestore, collection } from "firebase/firestore";
 import {
+  ADD_COMMENT,
   ADD_LIKED_SONG,
   ADD_POST_TO_FEED,
   ADD_TO_YOUR_SONGS,
+  LOAD_FEED,
+  SET_USER,
 } from "../data/Reducer.js";
 import { saveAndDispatch } from "../data/DB.js";
 import { useSelector, useDispatch } from "react-redux";
@@ -36,6 +39,9 @@ const db = getFirestore(app);
 
 function HomeScreen(props) {
   let feedList = useSelector((state) => state.feedList);
+
+  const { navigation } = props;
+  const dispatch = useDispatch();
 
   const [displayName, setDisplayName] = useState("");
   const [currUserId, setCurrUserId] = useState(auth.currentUser?.uid);
@@ -61,6 +67,7 @@ function HomeScreen(props) {
         newUser.key = docSnap.id;
         if (newUser.key === currUserId) {
           setDisplayName(newUser.displayName);
+          dispatch({ type: SET_USER, payload: { user: newUser.displayName } });
         }
         newUsers.push(newUser);
       });
@@ -73,7 +80,7 @@ function HomeScreen(props) {
       let newFeed = [];
       qSnap.forEach((docSnap) => {
         let post = docSnap.data();
-        post.key = post.id;
+        post.key = docSnap.id;
         newFeed.push(post);
       });
       setFeed(newFeed);
@@ -81,9 +88,6 @@ function HomeScreen(props) {
   }, []);
 
   console.log(feed);
-
-  const { navigation } = props;
-  const dispatch = useDispatch();
 
   const addPost = (newSong, newArtist, newCaption, newMood, newUserId) => {
     const action = {
@@ -97,6 +101,7 @@ function HomeScreen(props) {
         userId: newUserId,
         replies: [],
         postTime: Date.now(),
+        key: Date.now(),
       },
     };
     saveAndDispatch(action, dispatch);
@@ -150,6 +155,7 @@ function HomeScreen(props) {
                 userId={post.item.userId}
                 replies={post.item.replies}
                 postTime={post.item.postTime}
+                key={post.item.key}
               />
             );
           }}
@@ -235,9 +241,19 @@ function HomeScreen(props) {
 }
 
 function Post(props) {
-  const { song, artist, caption, mood, userId, liked, replies } = props;
+  const { song, artist, caption, mood, userId, liked, replies, key } = props;
+  const [overlayVisibleComment, setOverlayVisibleComment] = useState(false);
+  const toggleOverlayComment = () => {
+    setOverlayVisibleComment(!overlayVisibleComment);
+  };
+
+  // comments
+  const [inputSongComment, setInputSongComment] = useState("");
+  const [inputArtistComment, setInputArtistComment] = useState("");
 
   const dispatch = useDispatch();
+
+  const currentUser = useSelector((state) => state.user);
 
   const addNewLikedSong = (props) => {
     const { song, artist, caption, mood, userId, liked, replies } = props;
@@ -252,6 +268,32 @@ function Post(props) {
         liked: true,
         replies: replies,
         userDocID: auth.currentUser?.uid,
+      },
+    };
+    saveAndDispatch(action, dispatch);
+  };
+
+  const addComment = (
+    song,
+    artist,
+    caption,
+    mood,
+    userId,
+    liked,
+    replies,
+    key
+  ) => {
+    const action = {
+      type: ADD_COMMENT,
+      payload: {
+        song: song,
+        artist: artist,
+        caption: caption,
+        mood: mood,
+        userId: userId,
+        liked: liked,
+        replies: replies,
+        key: key,
       },
     };
     saveAndDispatch(action, dispatch);
@@ -336,6 +378,7 @@ function Post(props) {
             borderRadius: 20,
           }}
           titleStyle={{ fontWeight: "600", fontSize: 14, color: "#821a36" }}
+          onPress={toggleOverlayComment}
         >
           Recommend a Song
         </Button>
@@ -363,6 +406,57 @@ function Post(props) {
           }}
         />
       </View>
+
+      <Overlay
+        isVisible={overlayVisibleComment}
+        onBackdropPress={toggleOverlayComment}
+        overlayStyle={styles.addPostOverlay}
+      >
+        <View>
+          <View>
+            <Text style={styles.headerTextOverlay}>Recommend a Song</Text>
+          </View>
+          <View>
+            <Input
+              placeholder="Song"
+              value={inputSongComment}
+              onChangeText={(text) => setInputSongComment(text)}
+            />
+            <Input
+              placeholder="Artist"
+              value={inputArtistComment}
+              onChangeText={(text) => setInputArtistComment(text)}
+            />
+          </View>
+        </View>
+        <View>
+          <Button
+            color="secondary"
+            onPress={() => {
+              let newReplies = {
+                song: inputSongComment,
+                artist: inputArtistComment,
+              };
+              addComment(
+                song,
+                artist,
+                caption,
+                mood,
+                currentUser,
+                liked,
+                newReplies,
+                key
+              );
+              setInputArtistComment("");
+              setInputSongComment("");
+              toggleOverlayComment();
+            }}
+          >
+            Recommend!
+          </Button>
+        </View>
+      </Overlay>
+
       <Divider color="#ab2448" style={{ width: "80%" }} />
     </View>
   );

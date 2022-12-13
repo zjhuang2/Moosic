@@ -14,6 +14,8 @@ const LOAD_YOUR_SONGS = "LOAD_YOUR_SONGS";
 
 const LOAD_FEED = "LOAD_FEED";
 const ADD_POST_TO_FEED = "ADD_POST_TO_FEED";
+const ADD_COMMENT = "ADD_COMMENT";
+const SET_USER = "SET_USER";
 
 //initial list of Users (just for testing)
 const initialUsersList = [
@@ -70,6 +72,15 @@ const initialState = {
   likedSongsList: initialLikedSongList,
   yourSongPostsList: initialYourSongs,
   feedList: initialFeed,
+  user: "",
+};
+
+const setUser = (state, payload) => {
+  let { user } = payload;
+  return {
+    ...state,
+    user: user,
+  };
 };
 
 // load the feeds
@@ -82,7 +93,7 @@ const loadFeed = (state, payload) => {
 };
 
 const addPostToFeed = (state, payload) => {
-  let { song, artist, caption, liked, mood, userId, replies, postTime } =
+  let { song, artist, caption, liked, mood, userId, replies, postTime, key } =
     payload;
   let { feedList } = state;
   let updatedFeedList = feedList.concat({
@@ -94,6 +105,7 @@ const addPostToFeed = (state, payload) => {
     userId: userId,
     replies: replies,
     postTime: postTime,
+    key: key,
   });
   return {
     ...state,
@@ -204,6 +216,29 @@ const addLikedSong = (state, payload) => {
   };
 };
 
+const addComment = (state, payload) => {
+  const { song, artist, caption, mood, liked, userId, newReplies, key } =
+    payload;
+  const { feedList } = state;
+  let updatedPost = {
+    song: song,
+    artist: artist,
+    caption: caption,
+    mood: mood,
+    liked: liked,
+    userId: userId,
+    replies: newReplies,
+    key: key,
+  };
+  let updatedFeedList = feedList.map((elem) =>
+    elem.key === key ? updatedPost : elem
+  );
+  return {
+    ...state,
+    feedList: updatedFeedList,
+  };
+};
+
 function rootReducer(state = initialState, action) {
   const { type, payload } = action;
   switch (type) {
@@ -227,6 +262,10 @@ function rootReducer(state = initialState, action) {
       return addPostToFeed(state, payload);
     case ADD_TO_YOUR_SONGS:
       return addPostToYourSongs(state, payload);
+    case ADD_COMMENT:
+      return addComment(state, payload);
+    case SET_USER:
+      return setUser(state, payload);
     default:
       return state;
   }
@@ -244,4 +283,6 @@ export {
   LOAD_FEED,
   ADD_POST_TO_FEED,
   ADD_TO_YOUR_SONGS,
+  ADD_COMMENT,
+  SET_USER,
 };
