@@ -210,10 +210,13 @@ const addLikedSong = (state, payload) => {
 const addComment = (state, payload) => {
   console.log(payload);
   const {song} = payload;
+  const {feedList} = state;
 
   return {
     ...state,
-    updateVariable: song
+    updateVariable: song,
+    feedList: feedList,
+
   }
 
 }
