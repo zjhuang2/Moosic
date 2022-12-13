@@ -14,9 +14,19 @@ import { useEffect, useState } from "react";
 import { getAuth, signOut } from "firebase/auth";
 import { getApps, initializeApp } from "firebase/app";
 import { firebaseConfig } from "../Secrets";
-import { 
-  getFirestore, initializeFirestore, collection, getDocs, query, orderBy, limit,
-  where, doc, addDoc, getDoc, onSnapshot
+import {
+  getFirestore,
+  initializeFirestore,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  where,
+  doc,
+  addDoc,
+  getDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import {
   ADD_COMMENT,
@@ -40,7 +50,7 @@ const db = getFirestore(app);
 
 let snapshotUnsubscribe = undefined;
 
-let randomVariable = '';
+let randomVariable = "";
 
 function HomeScreen(props) {
   let feedList = useSelector((state) => state.feedList);
@@ -59,7 +69,6 @@ function HomeScreen(props) {
   const [inputArtist, setInputArtist] = useState("");
   const [inputCaption, setInputCaption] = useState("");
   const [inputMood, setInputMood] = useState("");
-
 
   const [overlayVisible, setOverlayVisible] = useState(false);
 
@@ -81,29 +90,25 @@ function HomeScreen(props) {
       setUsers(newUsers);
     });
 
-
     if (snapshotUnsubscribe) {
       snapshotUnsubscribe();
     }
 
-    const q = query(
-      collection(db, "moosicFeed"),
-      orderBy('postTime', 'desc'),
-    );
+    const q = query(collection(db, "moosicFeed"), orderBy("postTime", "desc"));
 
-    snapshotUnsubscribe = onSnapshot(q, (qSnap)=> {
+    snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
       let posts = [];
       //console.log("It went through")
       qSnap.docs.forEach((docSnap) => {
-        let postContent = docSnap.data()
+        let postContent = docSnap.data();
         //console.log(postContent);
         postContent.key = postContent.id;
         posts.push(postContent);
-      })
+      });
 
       //console.log("THESE ARE MY ORDERED POSTS:", posts)
       setFeed(posts);
-    })
+    });
 
     // onSnapshot(collection(db, "moosicFeed"), (qSnap) => {
     //   let newFeed = [];
@@ -114,7 +119,6 @@ function HomeScreen(props) {
     //   });
     //   setFeed(newFeed);
     // });
-
   }, [updateVariable]);
 
   //console.log(feed);
@@ -185,7 +189,7 @@ function HomeScreen(props) {
                 userId={post.item.userId}
                 replies={post.item.replies}
                 postTime={post.item.postTime}
-                displayName = {displayName}
+                displayName={displayName}
               />
             );
           }}
@@ -271,14 +275,15 @@ function HomeScreen(props) {
 }
 
 function Post(props) {
-  const { song, artist, caption, mood, userId, liked, replies, displayName } = props;
+  const { song, artist, caption, mood, userId, liked, replies, displayName } =
+    props;
   let likedSongs = useSelector((state) => state.likedSongsList);
 
-  const [recommendSong, setRecommendSong] = useState('');
-  const [recommendArtist, setRecommendArtist] = useState('');
+  const [recommendSong, setRecommendSong] = useState("");
+  const [recommendArtist, setRecommendArtist] = useState("");
   const [commentOverlayVisible, setCommentOverlayVisible] = useState(false);
 
-  const [docID, setDocID] = useState('');
+  const [docID, setDocID] = useState("");
 
   const toggleCommentOverlay = () => {
     setCommentOverlayVisible(!commentOverlayVisible);
@@ -305,43 +310,44 @@ function Post(props) {
   };
 
   const grabLikedIcon = (artist, song) => {
-
-    for (let i = 0; i< likedSongs.length; i++) {
+    for (let i = 0; i < likedSongs.length; i++) {
       let currentSong = likedSongs[i];
 
       if (artist === currentSong.artist && song === currentSong.song) {
-        
         //console.log("THIS IS THE SAME ARTIST AND SONG AND LIKED");
-        return <Icon name="favorite" type="material" color="red" />
+        return <Icon name="favorite" type="material" color="red" />;
       }
     }
-    return <Icon name="favorite" type="material" color="grey" />
-
-  }
+    return <Icon name="favorite" type="material" color="grey" />;
+  };
 
   const grabDocumentKey = (props) => {
-    const { song, artist, caption, mood, userId, liked, replies, postTime } = props;
+    const { song, artist, caption, mood, userId, liked, replies, postTime } =
+      props;
 
     if (snapshotUnsubscribe) {
       snapshotUnsubscribe();
     }
-  
+
     const q = query(collection(db, "moosicFeed"));
-  
+
     snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
       let feedSongsList = [];
-  
+
       qSnap.docs.forEach((docSnap) => {
         let songPost = docSnap.data();
         songPost.key = docSnap.id;
         feedSongsList.push(songPost);
-      })
-      
+      });
+
       for (let i = 0; i < feedSongsList.length; i++) {
         let currentPostSong = feedSongsList[i];
-        let documentKey = '';
+        let documentKey = "";
 
-        if (currentPostSong.postTime === postTime && currentPostSong.song === song & currentPostSong.artist === artist) {
+        if (
+          currentPostSong.postTime === postTime &&
+          (currentPostSong.song === song) & (currentPostSong.artist === artist)
+        ) {
           //console.log("THIS IS THE SONG II'M LOOOKING FOR: ", currentPostSong.song);
           documentKey = currentPostSong.key;
           //console.log("This is documentkey inside the snapshotunsubscribe:", documentKey)
@@ -349,12 +355,12 @@ function Post(props) {
           //return documentKey;
         }
       }
-      
-    })
-  }
+    });
+  };
 
   const addComment = (props, songName, artistName, key) => {
-    const { song, artist, caption, mood, userId, liked, replies, postTime } = props;
+    const { song, artist, caption, mood, userId, liked, replies, postTime } =
+      props;
 
     const action = {
       type: ADD_COMMENT,
@@ -370,11 +376,11 @@ function Post(props) {
         recommendedArtist: artistName,
         postTime: postTime,
         key: key,
-      }
+      },
     };
     randomVariable = song;
     saveAndDispatch(action, dispatch);
-  }
+  };
 
   return (
     <View
@@ -433,13 +439,13 @@ function Post(props) {
           }}
         >
           <TouchableOpacity
-            onPress = {() => {
+            onPress={() => {
               addNewLikedSong(props);
             }}
           >
-          {grabLikedIcon(artist, song)}
+            {grabLikedIcon(artist, song)}
           </TouchableOpacity>
-{/* 
+          {/* 
 
           {console.log("===================")}
           {console.log(song)}
@@ -468,7 +474,7 @@ function Post(props) {
             borderRadius: 20,
           }}
           titleStyle={{ fontWeight: "600", fontSize: 14, color: "#821a36" }}
-          onPress = {() => {
+          onPress={() => {
             toggleCommentOverlay();
             grabDocumentKey(props);
           }}
@@ -477,38 +483,37 @@ function Post(props) {
         </Button>
 
         <Overlay
-        isVisible={commentOverlayVisible}
-        onBackdropPress={toggleCommentOverlay}
-        overlayStyle={styles.addPostOverlay}
-      >
-        <View>
-          <Text>Add A Song Recommendation</Text>
-          <Input
+          isVisible={commentOverlayVisible}
+          onBackdropPress={toggleCommentOverlay}
+          overlayStyle={styles.addPostOverlay}
+        >
+          <View>
+            <Text style={{ fontWeight: "700", fontSize: 22, margin: 10 }}>
+              Add A Song Recommendation
+            </Text>
+            <Input
               placeholder="Enter A Song Title"
               value={recommendSong}
               onChangeText={(text) => setRecommendSong(text)}
             />
-          <Input
+            <Input
               placeholder="Enter The Artist"
               value={recommendArtist}
               onChangeText={(text) => setRecommendArtist(text)}
             />
 
-          <Button
-            color="secondary"
-            title = "Add Comment"
-            onPress = {() => {
-              //add the comment to firebase
-              addComment(props, recommendSong, recommendArtist, docID);
-              toggleCommentOverlay();
-            }}
-          ></Button>
-
-        </View>
-      </Overlay>
-
+            <Button
+              color="secondary"
+              title="Add Comment"
+              onPress={() => {
+                //add the comment to firebase
+                addComment(props, recommendSong, recommendArtist, docID);
+                toggleCommentOverlay();
+              }}
+            ></Button>
+          </View>
+        </Overlay>
       </View>
-
 
       <View
         style={{
@@ -620,9 +625,6 @@ const styles = StyleSheet.create({
 
 export default HomeScreen;
 
-
-
-
 //   const grabIcon = (props) => {
 //     const { song, artist, caption, mood, userId, liked, replies } = props;
 //     console.log(song);
@@ -633,17 +635,16 @@ export default HomeScreen;
 
 //     const q = query(
 //     collection(db, 'users', auth.currentUser?.uid, 'songCollection'),
-//     ); 
-
+//     );
 
 //     snapshotUnsubscribe = onSnapshot(q, (qSnap) => {
 //     let songsList = [];
-    
+
 //     qSnap.docs.forEach((docSnap)=>{
 //         let song_info = docSnap.data();
 //         song_info.key = docSnap.id;
 //         songsList.push(song_info);
-        
+
 //     });
 
 //    for (let i = 0; i < songsList.length; i++) {
