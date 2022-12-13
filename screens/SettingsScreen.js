@@ -16,7 +16,7 @@ export default SettingsScreen;
 const styles = StyleSheet.create({ 
 
     header: {
-        height: 108,
+        height: 122,
         backgroundColor: "#f5d7e0",
         width: "100%",
         alignItems: "center",
@@ -30,6 +30,6 @@ const styles = StyleSheet.create({
         top: 20,
         alignItems: 'flex-start',
         flex: 1,
-        paddingLeft: 60
+        paddingLeft: 50
       },
 })

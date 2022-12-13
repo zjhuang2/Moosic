@@ -15,6 +15,8 @@ const LOAD_YOUR_SONGS = "LOAD_YOUR_SONGS";
 const LOAD_FEED = "LOAD_FEED";
 const ADD_POST_TO_FEED = "ADD_POST_TO_FEED";
 
+const ADD_COMMENT = "ADD_COMMENT";
+
 //initial list of Users (just for testing)
 const initialUsersList = [
   { name: "Janice", bio: "hello, my name is Janice!", key: 2 },
@@ -70,6 +72,7 @@ const initialState = {
   likedSongsList: initialLikedSongList,
   yourSongPostsList: initialYourSongs,
   feedList: initialFeed,
+  updateVariable: ''
 };
 
 // load the feeds
@@ -134,7 +137,7 @@ const loadUser = (state, payload) => {
 const addUser = () => {};
 
 const updateUser = () => {
-  console.log("not doing anything");
+  //console.log("not doing anything");
 };
 
 const loadLikedSongs = (state, payload) => {
@@ -195,14 +198,28 @@ const addLikedSong = (state, payload) => {
   });
 
   //console.log(updatedSongList);
-  console.log("UPDATED SONGS LIST: ", updatedSongList);
-  console.log("Current SONGS LIST: ", likedSongsList);
+  // console.log("UPDATED SONGS LIST: ", updatedSongList);
+  // console.log("Current SONGS LIST: ", likedSongsList);
 
   return {
     ...state,
     likedSongsList: updatedSongList,
   };
 };
+
+const addComment = (state, payload) => {
+  console.log(payload);
+  const {song} = payload;
+  const {feedList} = state;
+
+  return {
+    ...state,
+    updateVariable: song,
+    feedList: feedList,
+
+  }
+
+}
 
 function rootReducer(state = initialState, action) {
   const { type, payload } = action;
@@ -227,6 +244,8 @@ function rootReducer(state = initialState, action) {
       return addPostToFeed(state, payload);
     case ADD_TO_YOUR_SONGS:
       return addPostToYourSongs(state, payload);
+    case ADD_COMMENT:
+      return addComment(state, payload);
     default:
       return state;
   }
@@ -244,4 +263,5 @@ export {
   LOAD_FEED,
   ADD_POST_TO_FEED,
   ADD_TO_YOUR_SONGS,
+  ADD_COMMENT,
 };
